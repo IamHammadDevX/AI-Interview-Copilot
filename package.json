@@ -1,0 +1,46 @@
+{
+  "name": "interview-copilot-code",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "postbuild": "next-sitemap",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.7.18",
+    "axios": "^1.6.8",
+    "crisp-sdk-web": "^1.0.22",
+    "eslint": "8.47.0",
+    "eslint-config-next": "13.4.19",
+    "form-data": "^4.0.0",
+    "formidable": "^3.5.4",
+    "framer-motion": "^12.12.1",
+    "lucide-react": "^0.511.0",
+    "next": "^14.1.4",
+    "openai": "^4.100.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-hot-toast": "^2.4.1",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^15.5.0",
+    "react-tooltip": "^5.26.3",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.7",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/dom-speech-recognition": "^0.0.6",
+    "@types/node": "^20.12.2",
+    "@types/react": "^18.2.73",
+    "@types/react-dom": "^18.2.23",
+    "@types/react-syntax-highlighter": "^15.5.11",
+    "daisyui": "^5.0.35",
+    "next-sitemap": "^4.2.3",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^4.1.7",
+    "typescript": "^5.4.3"
+  }
+}
