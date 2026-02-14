@@ -92,7 +92,7 @@ export async function POST(
   }
 
   const context = matches
-    .slice(0, 5)
+    .slice(0, 3)
     .map(
       (m, i) =>
         `Chunk ${i + 1} (similarity ${m.similarity.toFixed(3)}):\n${m.content}`
@@ -119,4 +119,3 @@ export async function POST(
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
-

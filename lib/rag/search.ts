@@ -16,7 +16,10 @@ function toPgVector(vec: number[]) {
 export async function searchSimilarChunks(
   projectId: string,
   query: string,
-  { minSimilarity = 0.75 }: { minSimilarity?: number } = {}
+  {
+    minSimilarity = 0.75,
+    matchCount = 3,
+  }: { minSimilarity?: number; matchCount?: number } = {}
 ) {
   const supabase = createSupabaseServerClient();
 
@@ -25,7 +28,7 @@ export async function searchSimilarChunks(
   const { data, error } = await supabase.rpc("match_project_embeddings", {
     p_project_id: projectId,
     p_query_embedding: toPgVector(embedding),
-    p_match_count: 5,
+    p_match_count: matchCount,
     p_min_similarity: minSimilarity,
   });
 

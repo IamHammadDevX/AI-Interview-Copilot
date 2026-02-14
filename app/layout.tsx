@@ -16,6 +16,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={font.className}>
+      <head>
+        <link rel="preconnect" href="https://openrouter.ai" />
+        <link rel="dns-prefetch" href="https://openrouter.ai" />
+      </head>
       <body className="min-h-screen bg-background text-foreground">
         <ClientLayout>{children}</ClientLayout>
       </body>

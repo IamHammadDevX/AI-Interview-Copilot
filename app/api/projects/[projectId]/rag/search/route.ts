@@ -40,20 +40,12 @@ export async function POST(
 
   const primary = await searchSimilarChunks(projectId, question, {
     minSimilarity: 0.75,
+    matchCount: 3,
   });
 
   if (primary.length > 0) {
     return NextResponse.json({ matches: primary, confidence: "high" });
   }
 
-  const secondary = await searchSimilarChunks(projectId, question, {
-    minSimilarity: 0.65,
-  });
-
-  if (secondary.length > 0) {
-    return NextResponse.json({ matches: secondary, confidence: "medium" });
-  }
-
   return NextResponse.json({ matches: [], confidence: "low" });
 }
-

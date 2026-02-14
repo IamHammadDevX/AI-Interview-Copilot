@@ -6,6 +6,10 @@ type OpenRouterEmbeddingsResponse = {
   data: Array<{ embedding: number[] }>;
 };
 
+const EMBEDDING_CACHE_MAX = 200;
+const EMBEDDING_CACHE_TTL_MS = 10 * 60 * 1000;
+const embeddingCache = new Map<string, { embedding: number[]; expiresAt: number }>();
+
 function getOpenRouterKey() {
   const key = process.env.OPEN_ROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
   if (!key) {
@@ -17,6 +21,16 @@ function getOpenRouterKey() {
 }
 
 export async function generateEmbedding(text: string): Promise<number[]> {
+  const keyText = text.trim();
+  if (keyText) {
+    const cached = embeddingCache.get(keyText);
+    if (cached && cached.expiresAt > Date.now()) {
+      embeddingCache.delete(keyText);
+      embeddingCache.set(keyText, cached);
+      return cached.embedding;
+    }
+  }
+
   const key = getOpenRouterKey();
 
   const res = await fetch("https://openrouter.ai/api/v1/embeddings", {
@@ -38,6 +52,17 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
   if (!embedding || !Array.isArray(embedding)) {
     throw new Error("OpenRouter embeddings returned invalid payload.");
+  }
+
+  if (keyText) {
+    embeddingCache.set(keyText, {
+      embedding,
+      expiresAt: Date.now() + EMBEDDING_CACHE_TTL_MS,
+    });
+    if (embeddingCache.size > EMBEDDING_CACHE_MAX) {
+      const first = embeddingCache.keys().next().value as string | undefined;
+      if (first) embeddingCache.delete(first);
+    }
   }
 
   return embedding;
@@ -72,4 +97,3 @@ export async function generateEmbeddingsBatch(texts: string[]) {
 
   return out;
 }
-

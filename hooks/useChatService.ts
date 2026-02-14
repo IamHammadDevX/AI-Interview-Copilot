@@ -22,8 +22,8 @@ export default function useChatService({
   const [transcript, setTranscript] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isSearchingDocs, setIsSearchingDocs] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const lastSoloRef = useRef<{ q: string; at: number } | null>(null);
 
   const storageKey = `chat-history:${projectId ?? 'global'}`;
 
@@ -59,95 +59,142 @@ export default function useChatService({
     addMessageToHistory('user', question);
 
     setIsThinking(true);
-    setIsSearchingDocs(false);
 
     try {
       abortControllerRef.current = new AbortController();
-      const fullHistory = [...chatHistoryRef.current];
-      const historyToSend = fullHistory.slice(-9);
 
       const shouldUseRag = Boolean(projectId) && !imageDataUrl;
 
       if (shouldUseRag) {
-        setIsSearchingDocs(true);
+        const now = Date.now()
+        const last = lastSoloRef.current
+        const shouldDebounce = last?.q === question && now - last.at < 2500
+        lastSoloRef.current = { q: question, at: now }
 
-        const searchRes = await fetch(`/api/projects/${projectId}/rag/search`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question }),
-          signal: abortControllerRef.current.signal,
-        });
-
-        const searchData = (await searchRes.json().catch(() => null)) as null | {
-          matches?: Array<{ content: string; similarity: number }>
-          confidence?: 'high' | 'medium' | 'low'
-          error?: string
-        }
-
-        if (!searchRes.ok) {
-          throw new Error(searchData?.error ?? 'Document search failed')
-        }
-
-        const matches = searchData?.matches ?? []
-        const confidence = searchData?.confidence ?? 'low'
-
-        if (matches.length > 0) {
-          const answerRes = await fetch(`/api/projects/${projectId}/rag/answer`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question, matches, confidence }),
-            signal: abortControllerRef.current.signal,
-          })
-
-          const answerData = (await answerRes.json().catch(() => null)) as null | {
-            answer?: string
-            source?: 'document'
-            confidence?: 'high' | 'medium' | 'low'
-            error?: string
-          }
-
-          setIsThinking(false)
-          setIsSearchingDocs(false)
-
-          if (!answerRes.ok) {
-            throw new Error(answerData?.error ?? 'RAG answer failed')
-          }
-
-          addMessageToHistory('assistant', answerData?.answer ?? '', {
+        let baseAssistantAdded = false
+        let pendingDoc: null | { answer: string; confidence: 'high' } = null
+        const flushDocIfReady = () => {
+          if (!baseAssistantAdded) return
+          if (!pendingDoc) return
+          addMessageToHistory('assistant', pendingDoc.answer, {
             source: 'document',
-            confidence: (answerData?.confidence ?? confidence) as any,
+            confidence: pendingDoc.confidence,
           })
-          return
+          pendingDoc = null
         }
 
-        setIsSearchingDocs(false)
-
-        const baseRes = await fetch(`/api/projects/${projectId}/rag/base`, {
+        const fastResPromise = fetch(`/api/projects/${projectId}/rag/fast`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question }),
           signal: abortControllerRef.current.signal,
         })
 
-        const baseData = (await baseRes.json().catch(() => null)) as null | {
-          answer?: string
-          source?: 'base-ai'
-          confidence?: 'high' | 'medium' | 'low'
-          error?: string
+        const ragTask = shouldDebounce
+          ? Promise.resolve(null)
+          : (async (): Promise<null | { answer: string; confidence: 'high' }> => {
+              const searchRes = await fetch(`/api/projects/${projectId}/rag/search`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question }),
+                signal: abortControllerRef.current?.signal,
+              })
+
+              const searchData = (await searchRes
+                .json()
+                .catch((): null => null)) as null | {
+                matches?: Array<{ content: string; similarity: number }>
+                confidence?: 'high' | 'medium' | 'low'
+                error?: string
+              }
+
+              if (!searchRes.ok) return null
+
+              const matches = searchData?.matches ?? []
+              const confidence = searchData?.confidence ?? 'low'
+
+              if (matches.length === 0 || confidence !== 'high') return null
+
+              const answerRes = await fetch(`/api/projects/${projectId}/rag/answer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question, matches, confidence }),
+                signal: abortControllerRef.current?.signal,
+              })
+
+              const answerData = (await answerRes
+                .json()
+                .catch((): null => null)) as null | {
+                answer?: string
+              }
+
+              if (!answerRes.ok) return null
+              if (!answerData?.answer) return null
+
+              return { answer: answerData.answer, confidence: 'high' }
+            })()
+
+        ragTask
+          .then((doc) => {
+            if (!doc?.answer) return
+            pendingDoc = doc
+            flushDocIfReady()
+          })
+          .catch((): null => null)
+
+        const fastRes = await fastResPromise
+
+        if (!fastRes.ok) {
+          const err = (await fastRes.json().catch((): null => null)) as any
+          throw new Error(err?.error ?? 'AI search failed')
         }
 
         setIsThinking(false)
+        setIsStreaming(true)
 
-        if (!baseRes.ok) {
-          throw new Error(baseData?.error ?? 'AI search failed')
+        addMessageToHistory('assistant', '', { source: 'base-ai', confidence: 'low' })
+        baseAssistantAdded = true
+        flushDocIfReady()
+
+        const reader = fastRes.body?.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let accumulatedContent = ''
+
+        while (reader) {
+          const { value, done } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed.startsWith('data:')) continue
+            const data = trimmed.slice(5).trim()
+            if (!data || data === '[DONE]') continue
+
+            try {
+              const json = JSON.parse(data) as any
+              const delta = json?.choices?.[0]?.delta?.content
+              if (typeof delta === 'string' && delta.length) {
+                accumulatedContent += delta
+                updateLastMessageInHistory(accumulatedContent)
+              }
+            } catch {
+              // ignore
+            }
+          }
         }
 
-        addMessageToHistory('assistant', baseData?.answer ?? '', {
-          source: 'base-ai',
-          confidence: 'low',
-        })
+        setIsStreaming(false)
+
         return
       }
+
+      const fullHistory = [...chatHistoryRef.current];
+      const historyToSend = fullHistory.slice(-9);
 
       const res = await makeCopilotRequest({
         question,
@@ -181,8 +228,7 @@ export default function useChatService({
 
       if (contentType.includes('application/json')) {
         setIsThinking(false);
-        setIsSearchingDocs(false);
-        const data = (await res.json().catch(() => null)) as null | {
+        const data = (await res.json().catch((): null => null)) as null | {
           answer?: string;
           source?: 'document' | 'internet' | 'base-ai';
           confidence?: 'high' | 'medium' | 'low';
@@ -200,7 +246,6 @@ export default function useChatService({
       }
 
       setIsThinking(false);
-      setIsSearchingDocs(false);
       setIsStreaming(true);
 
       addMessageToHistory('assistant', '', { source: 'base-ai', confidence: 'low' });
@@ -255,7 +300,6 @@ export default function useChatService({
     } finally {
       setIsThinking(false);
       setIsStreaming(false);
-      setIsSearchingDocs(false);
       abortControllerRef.current = null;
     }
   };
@@ -296,7 +340,6 @@ export default function useChatService({
     chatHistory,
     isThinking,
     isStreaming,
-    isSearchingDocs,
     transcript,
     handleTranscript,
     setTranscript,

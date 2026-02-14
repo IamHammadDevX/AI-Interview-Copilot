@@ -93,6 +93,13 @@ const Bubble = memo(function Bubble({
         }
       >
         <div className="prose max-w-none prose-compact prose-sm prose-p:my-0 prose-li:my-0 prose-li:py-0 prose-ul:my-0 prose-ul:py-1 prose-pre:my-0">
+          {isAssistant && turn.meta?.source === 'document' && (
+            <div className="mb-1">
+              <span className="inline-flex items-center rounded-full border border-blue-300/60 bg-blue-500/10 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:text-blue-300">
+                From Documents
+              </span>
+            </div>
+          )}
           <ReactMarkdown components={{ pre: PreWithCopy }} remarkPlugins={[remarkGfm]}>
             {turn.content}
           </ReactMarkdown>
@@ -125,7 +132,6 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
     chatHistory,
     isThinking,
     isStreaming,
-    isSearchingDocs,
     handleTranscript,
     clearChatHistory,
   } = useChatService({ projectId })
@@ -308,9 +314,7 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
               {isThinking && (
                 <ThinkingAnimation
                   label={
-                    isSearchingDocs
-                      ? 'Searching from given documents...'
-                      : 'AI Searches...'
+                    'AI Searches...'
                   }
                 />
               )}
