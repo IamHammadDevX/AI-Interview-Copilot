@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@headlessui/react": "^1.7.18",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.95.3",
     "axios": "^1.6.8",
     "crisp-sdk-web": "^1.0.22",
     "eslint": "8.47.0",

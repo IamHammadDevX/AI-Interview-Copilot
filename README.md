@@ -230,7 +230,7 @@ If automated setup fails:
 
 Need assistance? We're here to help!
 
-- 📧 **Email**: support@interviewcopilot.info
+- 📧 **Email**: iamhammaddev03@gmail.com
 - 🐛 **Issues**: [GitHub Issues](https://github.com/your-org/interview-copilot/issues)
 
 ---
