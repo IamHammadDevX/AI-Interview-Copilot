@@ -1,6 +1,8 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import ProjectDetailForm from "../ui/ProjectDetailForm";
+import ProjectDocumentsSection from "../ui/ProjectDocumentsSection";
 
 export default async function ProjectPage({
   params,
@@ -36,8 +38,18 @@ export default async function ProjectPage({
             </p>
           )}
         </div>
+
+        <div className="flex gap-2">
+          <Link
+            href={`/panel?projectId=${encodeURIComponent(project.id)}`}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
+          >
+            Open panel
+          </Link>
+        </div>
       </div>
       <ProjectDetailForm project={project} />
+      <ProjectDocumentsSection projectId={project.id} />
     </div>
   );
 }

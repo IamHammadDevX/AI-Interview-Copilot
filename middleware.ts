@@ -20,6 +20,9 @@ export async function middleware(req: NextRequest) {
   });
 
   const supabase = createServerClient(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+    },
     cookies: {
       getAll() {
         return req.cookies.getAll();

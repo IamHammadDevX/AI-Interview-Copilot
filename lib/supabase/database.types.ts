@@ -53,6 +53,13 @@ export type Database = {
           file_name: string;
           file_path: string;
           created_at: string;
+          user_id: string | null;
+          mime_type: string | null;
+          size_bytes: number | null;
+          status: Database["public"]["Enums"]["document_status"];
+          error: string | null;
+          extracted_text: string | null;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -60,10 +67,24 @@ export type Database = {
           file_name: string;
           file_path: string;
           created_at?: string;
+          user_id?: string | null;
+          mime_type?: string | null;
+          size_bytes?: number | null;
+          status?: Database["public"]["Enums"]["document_status"];
+          error?: string | null;
+          extracted_text?: string | null;
+          updated_at?: string;
         };
         Update: {
           file_name?: string;
           file_path?: string;
+          user_id?: string | null;
+          mime_type?: string | null;
+          size_bytes?: number | null;
+          status?: Database["public"]["Enums"]["document_status"];
+          error?: string | null;
+          extracted_text?: string | null;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -74,6 +95,9 @@ export type Database = {
           content: string;
           embedding: unknown;
           created_at: string;
+          project_id: string | null;
+          chunk_index: number | null;
+          token_count: number | null;
         };
         Insert: {
           id?: string;
@@ -81,10 +105,16 @@ export type Database = {
           content: string;
           embedding: unknown;
           created_at?: string;
+          project_id?: string | null;
+          chunk_index?: number | null;
+          token_count?: number | null;
         };
         Update: {
           content?: string;
           embedding?: unknown;
+          project_id?: string | null;
+          chunk_index?: number | null;
+          token_count?: number | null;
         };
         Relationships: [];
       };
@@ -114,8 +144,20 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
+    Functions: {
+      match_project_embeddings: {
+        Args: {
+          p_project_id: string;
+          p_query_embedding: string;
+          p_match_count?: number;
+          p_min_similarity?: number;
+        };
+        Returns: Array<{ document_id: string; content: string; similarity: number }>;
+      };
+    };
+    Enums: {
+      document_status: "uploaded" | "processing" | "ready" | "error";
+    };
     CompositeTypes: Record<string, never>;
   };
 };

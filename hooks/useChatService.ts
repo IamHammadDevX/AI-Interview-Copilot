@@ -6,9 +6,17 @@ type Role = 'user' | 'assistant';
 interface Turn {
   role: Role;
   content: string;
+  meta?: {
+    source: 'document' | 'internet' | 'base-ai';
+    confidence: 'high' | 'medium' | 'low';
+  };
 }
 
-export default function useChatService() {
+export default function useChatService({
+  projectId,
+}: {
+  projectId?: string | null;
+} = {}) {
   const chatHistoryRef = useRef<Turn[]>([]);
   const [chatHistory, setChatHistory] = useState<Turn[]>([]);
   const [transcript, setTranscript] = useState('');
@@ -51,12 +59,21 @@ export default function useChatService() {
       const fullHistory = [...chatHistoryRef.current];
       const historyToSend = fullHistory.slice(-9);
 
-      const res = await makeCopilotRequest({
-        question,
-        history: historyToSend,
-        imageDataUrl,
-        signal: abortControllerRef.current.signal,
-      });
+      const shouldUseRag = Boolean(projectId) && !imageDataUrl;
+
+      const res = shouldUseRag
+        ? await fetch(`/api/projects/${projectId}/rag`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question }),
+            signal: abortControllerRef.current.signal,
+          })
+        : await makeCopilotRequest({
+            question,
+            history: historyToSend,
+            imageDataUrl,
+            signal: abortControllerRef.current.signal,
+          });
 
       if (!res.ok) {
         let code = '';
@@ -76,6 +93,27 @@ export default function useChatService() {
         }
 
         ErrorToast('Something went wrong. Try again');
+        return;
+      }
+
+      const contentType = res.headers.get('content-type') || '';
+
+      if (contentType.includes('application/json')) {
+        setIsThinking(false);
+        const data = (await res.json().catch(() => null)) as null | {
+          answer?: string;
+          source?: 'document' | 'internet' | 'base-ai';
+          confidence?: 'high' | 'medium' | 'low';
+        };
+
+        addMessageToHistory(
+          'assistant',
+          data?.answer ?? '',
+          data?.source && data?.confidence
+            ? { source: data.source, confidence: data.confidence }
+            : undefined
+        );
+
         return;
       }
 
@@ -113,8 +151,8 @@ export default function useChatService() {
                     accumulatedContent += parsed.content;
                     updateLastMessageInHistory(accumulatedContent);
                   }
-                } catch (e) {
-                  console.warn('Failed to parse JSON:', data);
+                } catch {
+                  /* ignore */
                 }
               }
             }
@@ -138,8 +176,12 @@ export default function useChatService() {
     }
   };
 
-  const addMessageToHistory = (role: Turn['role'], content: string) => {
-    const updated = [...chatHistoryRef.current, { role, content }];
+  const addMessageToHistory = (
+    role: Turn['role'],
+    content: string,
+    meta?: Turn['meta']
+  ) => {
+    const updated = [...chatHistoryRef.current, { role, content, meta }];
     chatHistoryRef.current = updated;
     setChatHistory(updated);
   }

@@ -16,6 +16,9 @@ export function createSupabaseServerClient() {
   const cookieStore = cookies();
 
   return createServerClient<Database>(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+    },
     cookies: {
       getAll() {
         return cookieStore.getAll();

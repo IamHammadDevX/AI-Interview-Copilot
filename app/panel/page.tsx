@@ -14,7 +14,11 @@ const PanelClient = dynamic(() => import('./ui/PanelClient'), {
   ),
 })
 
-export default async function PanelPage() {
+export default async function PanelPage({
+  searchParams,
+}: {
+  searchParams: { projectId?: string };
+}) {
   const supabase = createSupabaseServerClient()
   const {
     data: { user },
@@ -22,6 +26,5 @@ export default async function PanelPage() {
 
   if (!user) redirect('/login')
 
-  return <PanelClient />
+  return <PanelClient projectId={searchParams.projectId ?? null} />
 }
-

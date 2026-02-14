@@ -51,7 +51,14 @@ const Recorder = dynamic(() => import('@/components/Recorder'), {
   ),
 })
 
-type Turn = { role: 'assistant' | 'user'; content: string }
+type Turn = {
+  role: 'assistant' | 'user'
+  content: string
+  meta?: {
+    source: 'document' | 'internet' | 'base-ai'
+    confidence: 'high' | 'medium' | 'low'
+  }
+}
 
 const Bubble = memo(function Bubble({
   turn,
@@ -61,12 +68,24 @@ const Bubble = memo(function Bubble({
   streaming: boolean
 }) {
   const isAssistant = turn.role === 'assistant'
+
+  const assistantClass = useMemo(() => {
+    if (!isAssistant) return ''
+    if (turn.meta?.source === 'document') {
+      return 'border-blue-200 bg-blue-50 text-blue-950 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-50'
+    }
+    if (turn.meta?.source === 'internet') {
+      return 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-50'
+    }
+    return 'border-border bg-card/70 text-foreground'
+  }, [isAssistant, turn.meta?.source])
+
   return (
     <div className={isAssistant ? 'flex justify-start' : 'flex justify-end'}>
       <div
         className={
           isAssistant
-            ? 'max-w-[min(720px,100%)] rounded-[calc(var(--radius)-6px)] border border-border bg-card/70 px-3 py-2 text-sm text-foreground shadow-sm'
+            ? `max-w-[min(720px,100%)] rounded-[calc(var(--radius)-6px)] border px-3 py-2 text-sm shadow-sm ${assistantClass}`
             : 'max-w-[min(720px,100%)] rounded-[calc(var(--radius)-6px)] border border-primary bg-primary px-3 py-2 text-sm text-primary-foreground shadow-sm prose-invert'
         }
       >
@@ -83,7 +102,7 @@ const Bubble = memo(function Bubble({
   )
 })
 
-export default function PanelClient() {
+export default function PanelClient({ projectId }: { projectId?: string | null }) {
   const { requestMic } = useMicPermission()
   const [captureStream, setCaptureStream] = useState<MediaStream | null>(null)
   const [isTranscribing, setIsTranscribing] = useState(false)
@@ -91,7 +110,7 @@ export default function PanelClient() {
   const [isPending, startTransition] = useTransition()
 
   const { chatHistory, isThinking, isStreaming, handleTranscript, clearChatHistory } =
-    useChatService()
+    useChatService({ projectId })
 
   const [shouldStopCapture, setShouldStopCapture] = useState(false)
   const [promptOpen, setPromptOpen] = useState(false)
