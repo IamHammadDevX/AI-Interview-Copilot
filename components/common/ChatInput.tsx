@@ -63,7 +63,7 @@ const ChatInput = ({
 
   return (
     <div className="lg:mt-4 relative">
-      <div className="relative flex items-center gap-2 p-1 lg:p-3 bg-gray-50 rounded-xl border border-gray-200 focus-within:border-orange-300 focus-within:ring-2 focus-within:ring-orange-100 transition-all">
+      <div className="relative flex items-center gap-2 p-1 lg:p-3 bg-base-200/40 rounded-2xl border border-base-300 focus-within:border-primary/60 focus-within:ring-4 focus-within:ring-primary/10 transition-all">
         <textarea
           ref={inputRef}
           value={value}
@@ -72,7 +72,7 @@ const ChatInput = ({
           placeholder={placeholder}
           disabled={disabled}
           rows={1}
-          className="flex-1 bg-transparent border-none outline-none resize-none text-gray-800 placeholder-gray-500 text-sm leading-relaxed max-h-32"
+          className="flex-1 bg-transparent border-none outline-none resize-none text-base-content placeholder:opacity-60 text-sm leading-relaxed max-h-32"
           onInput={(e) => {
             const target = e.target as HTMLTextAreaElement;
             target.style.height = 'auto';
@@ -83,10 +83,8 @@ const ChatInput = ({
         <button
           onClick={handleSend}
           disabled={!canSend}
-          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 flex-shrink-0 ${
-            canSend
-              ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-sm hover:shadow-md'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          className={`btn btn-square btn-sm flex-shrink-0 ${
+            canSend ? 'btn-primary' : 'btn-ghost opacity-40'
           }`}
         >
           {isLoading ? (

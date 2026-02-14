@@ -66,7 +66,7 @@ export default function Recorder({
 
   if (useWebAPI) {
     return (
-      <div className="w-full h-full bg-gray-50 rounded-xl p-4 border border-gray-200">
+      <div className="w-full h-full bg-base-200/40 rounded-3xl p-4 border border-base-300">
         <div className="flex gap-4 h-full">
           <div className="flex flex-col gap-3 min-w-0 flex-shrink-0">
             <div className="flex flex-col gap-2">
@@ -119,7 +119,7 @@ export default function Recorder({
   }
     return (
       <div className="flex w-full justify-between lg:flex-col h-full">
-        <div className="flex w-full lg:bg-gray-50 border border-gray-200 rounded-lg">
+        <div className="flex w-full bg-base-200/40 border border-base-300 rounded-2xl">
           <TimerDisplay formattedTime={formattedTime} recording={recording} />
           <SpeechRecognitionToggle
             useWebAPI={useWebAPI}

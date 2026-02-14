@@ -14,8 +14,8 @@ export default function Error({
 }) {
   return (
     <>
-      <div className="h-screen w-full flex flex-col justify-center items-center text-center gap-6 p-6">
-        <div className="p-6 bg-white rounded-xl">
+      <div className="min-h-screen w-full flex flex-col justify-center items-center text-center gap-6 p-6">
+        <div className="p-6 bg-base-100/80 backdrop-blur rounded-3xl border border-base-300 shadow-xl">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             data-name="Layer 1"
@@ -134,7 +134,7 @@ export default function Error({
           Something went wrong 🥲
         </p>
 
-        <p className="text-red-500">{error?.message}</p>
+        <p className="text-error">{error?.message}</p>
 
         <div className="flex flex-wrap gap-4 justify-center">
           <button className="btn btn-sm" onClick={reset}>

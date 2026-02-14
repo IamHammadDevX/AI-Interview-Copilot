@@ -5,8 +5,8 @@ import Link from 'next/link';
 // Show a cute SVG with your primary color
 export default function Custom404() {
   return (
-    <section className="relative bg-base-100 text-base-content h-screen w-full flex flex-col justify-center gap-8 items-center p-10">
-      <div className="p-6 bg-white rounded-xl">
+    <section className="relative text-base-content min-h-screen w-full flex flex-col justify-center gap-8 items-center p-10">
+      <div className="p-6 bg-base-100/80 backdrop-blur rounded-3xl border border-base-300 shadow-xl">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="w-56 h-56"

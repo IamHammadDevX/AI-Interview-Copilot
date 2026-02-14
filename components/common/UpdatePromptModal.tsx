@@ -61,9 +61,8 @@ const UpdatePromptModal = ({ modalRef }: ModalProps) => {
 
   return (
     <dialog ref={modalRef} className="modal modal-bottom sm:modal-middle">
-      <div className="modal-box max-w-4xl w-full max-h-[90vh] p-0 overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-4 flex items-center justify-between">
+      <div className="modal-box max-w-4xl w-full max-h-[90vh] p-0 overflow-hidden bg-base-100/90 backdrop-blur border border-base-300 rounded-3xl">
+        <div className="bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] px-6 py-4 flex items-center justify-between">
           <div className="flex items-center">
             <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-lg mr-3">
               <Sparkles className="h-5 w-5 text-white" />
@@ -72,7 +71,7 @@ const UpdatePromptModal = ({ modalRef }: ModalProps) => {
               <h3 className="text-lg font-bold text-white">
                 Update System Prompt
               </h3>
-              <p className="text-orange-100 text-sm">
+              <p className="text-white/90 text-sm">
                 Quick edit your AI assistant&apos;s behavior
               </p>
             </div>
@@ -90,7 +89,7 @@ const UpdatePromptModal = ({ modalRef }: ModalProps) => {
             <div>
               <label
                 htmlFor="modal-prompt"
-                className="flex items-center text-sm font-semibold text-slate-700 mb-2"
+                className="flex items-center text-sm font-semibold text-base-content mb-2"
               >
                 <FileText className="h-4 w-4 mr-2" />
                 System Prompt
@@ -98,17 +97,17 @@ const UpdatePromptModal = ({ modalRef }: ModalProps) => {
               <div className="relative">
                 <textarea
                   id="modal-prompt"
-                  className="w-full p-3 pb-8 border-2 border-orange-200 rounded-lg text-sm font-mono leading-relaxed resize-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-200 bg-orange-50/30"
+                  className="w-full p-3 pb-8 border border-base-300 rounded-2xl text-sm font-mono leading-relaxed resize-none focus:border-primary/60 focus:ring-4 focus:ring-primary/10 transition-all duration-200 bg-base-100/80"
                   rows={12}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Enter your system prompt here..."
                 />
-                <div className="absolute bottom-3 right-3 text-xs text-slate-400 bg-white px-2 py-1 rounded-md shadow-sm">
+                <div className="absolute bottom-3 right-3 text-xs opacity-60 bg-base-100 px-2 py-1 rounded-md shadow-sm">
                   {prompt.length} characters
                 </div>
               </div>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs opacity-70 mt-1">
                 💡 Tip: Include your target role, years of experience, and key
                 skills in your prompt
               </p>
@@ -116,20 +115,18 @@ const UpdatePromptModal = ({ modalRef }: ModalProps) => {
           </div>
         </div>
 
-        <div className="border-t border-orange-200 px-6 py-4 bg-orange-50/30">
+        <div className="border-t border-base-300 px-6 py-4 bg-base-200/40">
           <div className="flex justify-between items-center gap-3">
             <button
               onClick={handleCancel}
-              className="cursor-pointer flex justify-center items-center px-4 py-2 border border-slate-300 bg-white text-slate-700 rounded-lg hover:bg-slate-50 transition-all duration-200 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-ghost"
             >
               Close
             </button>
 
             <button
               onClick={savePrompt}
-              className="cursor-pointer
-                    flex items-center px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200
-                    bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+              className="btn btn-primary"
             >
               <Save className="h-4 w-4 mr-2" />
               Update Prompt

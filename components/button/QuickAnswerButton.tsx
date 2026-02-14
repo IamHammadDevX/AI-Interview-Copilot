@@ -53,7 +53,7 @@ const QuickAnswerButton = ({
           disabled={disabled}
           className={`cursor-pointer
         flex items-center justify-center w-8 h-8
-      bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg font-medium transition-all duration-200 hover:from-amber-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2
+      bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] text-white rounded-xl font-medium transition-all duration-200 hover:from-[#E85F00] hover:to-[#FF8A2A] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-primary/15
         
       `}
           whileHover={{ scale: 1.05 }}
@@ -67,8 +67,8 @@ const QuickAnswerButton = ({
             <Zap className="w-4 h-4" />
           )}
         </motion.button>
-        <p className="text-xs text-gray-500 mt-1">
-          Press <kbd className=" py-0.5 bg-gray-100 rounded text-xs">A</kbd>
+        <p className="text-xs opacity-70 mt-1">
+          Press <kbd className="py-0.5 px-1 bg-base-200 border border-base-300 rounded text-xs">A</kbd>
         </p>
       </div>
     );
@@ -80,7 +80,7 @@ const QuickAnswerButton = ({
       onClick={handleClick}
       disabled={disabled}
       aria-disabled={isSending || disabled}
-      className="lg:flex-1 cursor-pointer flex items-center justify-center gap-3 w-10 h-10 lg:w-fit lg:h-fit p-1 lg:p-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg font-medium transition-all duration-200 hover:from-amber-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-orange-300 focus:ring-offset-2"
+      className="lg:flex-1 cursor-pointer flex items-center justify-center gap-3 w-10 h-10 lg:w-fit lg:h-fit p-1 lg:p-4 bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] text-white rounded-2xl font-medium transition-all duration-200 hover:from-[#E85F00] hover:to-[#FF8A2A] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-primary/15"
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       aria-label="Get AI answer (A)"
@@ -94,7 +94,7 @@ const QuickAnswerButton = ({
       <span className="font-semibold hidden lg:block">
         {isSending ? 'Answering...' : 'AI Answer'}
       </span>
-      <kbd className="hidden lg:block px-2 py-1 bg-orange-700/50 rounded text-xs">
+      <kbd className="hidden lg:block px-2 py-1 bg-white/20 border border-white/30 rounded text-xs">
         A
       </kbd>
     </motion.button>

@@ -35,8 +35,8 @@ export default function AuthForm({
   const isSignup = mode === "signup";
 
   return (
-    <div className="min-h-screen bg-base-200">
-      <div className="navbar bg-base-100/80 backdrop-blur shadow-sm sticky top-0 z-50">
+    <div className="min-h-screen">
+      <div className="navbar bg-base-100/70 backdrop-blur border-b border-base-300 sticky top-0 z-50">
         <div className="flex-1">
           <Link className="btn btn-ghost text-xl" href="/">
             AI Interview Copilot
@@ -51,24 +51,34 @@ export default function AuthForm({
 
       <div className="px-4 py-10">
         <div className="max-w-5xl mx-auto grid gap-6 lg:grid-cols-2 items-stretch">
-          <div className="card bg-base-100 shadow-lg border border-base-300">
-            <div className="card-body">
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 rounded-full bg-base-200 px-3 py-1.5 text-sm">
-                  <span className="badge badge-primary badge-sm" />
-                  <span className="opacity-80">Secure access</span>
+          <div className="card bg-base-100/80 backdrop-blur border border-base-300 shadow-xl overflow-hidden rounded-3xl">
+            <div className="bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] px-6 py-7">
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="h-6 w-6 text-white"
+                  >
+                    <path d="M12 2 9.5 8.5 3 11l6.5 2.5L12 20l2.5-6.5L21 11l-6.5-2.5L12 2Z" />
+                  </svg>
                 </div>
-                <h1 className="text-3xl font-bold">
-                  {isSignup ? "Create your account" : "Sign in"}
-                </h1>
-                <p className="opacity-80">
-                  {isSignup
-                    ? "Get access to your dashboard and the protected interview panel."
-                    : "Welcome back. Continue where you left off."}
-                </p>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                    {isSignup ? "Create account" : "Welcome back"}
+                  </h1>
+                  <p className="text-white/90 text-sm mt-1">
+                    {isSignup
+                      ? "Create your workspace and start preparing."
+                      : "Sign in to continue to your dashboard."}
+                  </p>
+                </div>
               </div>
+            </div>
 
-              <form action={formAction} className="space-y-3 mt-4">
+            <div className="card-body">
+              <form action={formAction} className="space-y-3">
                 {isSignup && (
                   <label className="form-control w-full">
                     <div className="label">
@@ -141,45 +151,27 @@ export default function AuthForm({
             </div>
           </div>
 
-          <div className="card bg-base-100 shadow-lg border border-base-300">
+          <div className="card bg-base-100/80 backdrop-blur border border-base-300 shadow-xl rounded-3xl">
             <div className="card-body">
-              <h2 className="card-title">What you get</h2>
-              <div className="grid gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="badge badge-primary badge-sm mt-1" />
-                  <div>
-                    <div className="font-semibold">Protected routes</div>
-                    <div className="text-sm opacity-70">
-                      Panel and dashboard are server-side gated by session.
-                    </div>
+              <h2 className="text-lg font-semibold">What you get</h2>
+              <div className="mt-2 grid gap-3">
+                <div className="rounded-2xl border border-base-300 bg-base-100 p-4">
+                  <div className="font-semibold">Protected routes</div>
+                  <div className="text-sm opacity-70 mt-1">
+                    Dashboard and panel are server-side gated by session.
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="badge badge-primary badge-sm mt-1" />
-                  <div>
-                    <div className="font-semibold">Per-user data isolation</div>
-                    <div className="text-sm opacity-70">
-                      Supabase RLS prevents cross-user access.
-                    </div>
+                <div className="rounded-2xl border border-base-300 bg-base-100 p-4">
+                  <div className="font-semibold">Per-user isolation</div>
+                  <div className="text-sm opacity-70 mt-1">
+                    RLS prevents cross-user access by default.
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="badge badge-primary badge-sm mt-1" />
-                  <div>
-                    <div className="font-semibold">Responsive UI</div>
-                    <div className="text-sm opacity-70">
-                      Works cleanly on mobile, tablet, and desktop.
-                    </div>
+                <div className="rounded-2xl border border-base-300 bg-base-100 p-4">
+                  <div className="font-semibold">Modern responsive UI</div>
+                  <div className="text-sm opacity-70 mt-1">
+                    Clean layout that adapts to light/dark backgrounds.
                   </div>
-                </div>
-              </div>
-
-              <div className="mt-auto pt-4">
-                <div className="alert">
-                  <span className="text-sm">
-                    Tip: After signing in, go to Dashboard → Prompt to set the
-                    assistant behavior.
-                  </span>
                 </div>
               </div>
             </div>

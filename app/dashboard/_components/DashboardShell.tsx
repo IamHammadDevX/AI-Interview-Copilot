@@ -38,7 +38,7 @@ export default function DashboardShell({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen">
       <div className="drawer lg:drawer-open">
         <input id="dash-drawer" type="checkbox" className="drawer-toggle" />
         <div className="drawer-content flex flex-col">
@@ -81,19 +81,21 @@ export default function DashboardShell({
                 Open panel
               </Link>
 
-              <div className="dropdown dropdown-end">
+              <div className="dropdown dropdown-end dropdown-bottom">
                 <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
                   <div className="avatar placeholder">
-                    <div className="bg-primary/10 text-primary rounded-full w-8">
-                      <span className="text-xs font-semibold">
-                        {(userEmail ?? "U").slice(0, 1).toUpperCase()}
-                      </span>
+                    <div className="rounded-full w-9 h-9 bg-gradient-to-br from-[#FF6B00] to-[#FFA63D] p-[2px]">
+                      <div className="rounded-full w-full h-full bg-base-100 flex items-center justify-center">
+                        <span className="text-xs font-semibold text-[#FF6B00]">
+                          {(userEmail ?? "U").slice(0, 1).toUpperCase()}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
                 <ul
                   tabIndex={0}
-                  className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-64 border border-base-300"
+                  className="dropdown-content z-[100] menu p-2 shadow-xl bg-base-100/90 backdrop-blur rounded-2xl w-64 border border-base-300 mt-3"
                 >
                   <li className="menu-title">
                     <span className="truncate">{userEmail ?? "Account"}</span>
@@ -103,7 +105,12 @@ export default function DashboardShell({
                   </li>
                   <li>
                     <form action={logoutAction}>
-                      <button type="submit">Logout</button>
+                      <button
+                        type="submit"
+                        className="text-error font-semibold hover:bg-error/10 active:bg-error/15"
+                      >
+                        Logout
+                      </button>
                     </form>
                   </li>
                 </ul>
@@ -116,7 +123,7 @@ export default function DashboardShell({
 
         <div className="drawer-side">
           <label htmlFor="dash-drawer" className="drawer-overlay" />
-          <aside className="w-72 min-h-full bg-base-100 border-r border-base-300">
+          <aside className="w-72 min-h-full bg-base-100/80 backdrop-blur border-r border-base-300">
             <div className="p-4">
               <div className="flex items-center justify-between">
                 <Link href="/dashboard/projects" className="text-lg font-semibold tracking-tight">
@@ -167,7 +174,7 @@ export default function DashboardShell({
                 </Link>
               </div>
 
-              <div className="mt-6 rounded-2xl border border-base-300 bg-base-200/50 p-4">
+              <div className="mt-6 rounded-2xl border border-base-300 bg-base-100/60 p-4">
                 <div className="text-xs opacity-70">Signed in as</div>
                 <div className="text-sm font-semibold truncate mt-1">
                   {userEmail ?? "Account"}

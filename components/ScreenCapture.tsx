@@ -75,7 +75,7 @@ const ScreenCapture = ({
     useGlobalShortcut('KeyX', takeScreenshot, capturing && !loading);
 
     return (
-      <div className="relative w-full h-full flex items-center justify-center bg-white rounded-xl overflow-hidden">
+      <div className="relative w-full h-full flex items-center justify-center bg-base-100/70 backdrop-blur rounded-3xl border border-base-300 overflow-hidden">
         <video
           ref={videoRef}
           className={`w-full h-full object-contain rounded-xl transition-opacity duration-300 ${
@@ -88,21 +88,21 @@ const ScreenCapture = ({
         {!capturing && (
           <div className="flex flex-col items-center justify-center space-y-2 lg:space-y-6 text-center p-8 pb-20 transition-opacity duration-300">
             <div className="relative">
-              <div className="w-10 h-10 lg:w-20 lg:h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 lg:w-20 lg:h-20 bg-gradient-to-br from-[#FF6B00] to-[#FFA63D] rounded-2xl flex items-center justify-center shadow-lg">
                 <Monitor className="w-6 h-6 lg:w-10 lg:h-10 text-white" />
               </div>
               {loading && (
-                <div className="absolute inset-0 bg-amber-600 rounded-2xl flex items-center justify-center">
+                <div className="absolute inset-0 bg-[#E85F00] rounded-2xl flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-white animate-spin" />
                 </div>
               )}
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-slate-800">
+              <h3 className="text-lg font-semibold text-base-content">
                 {loading ? 'Connecting...' : 'Ready to Capture'}
               </h3>
-              <p className="text-slate-600 max-w-md text-sm leading-relaxed">
+              <p className="opacity-70 max-w-md text-sm leading-relaxed">
                 {loading
                   ? 'Setting up your screen share and microphone...'
                   : 'Share your screen and start capturing high-quality video with synchronized audio from your microphone.'}
@@ -110,7 +110,7 @@ const ScreenCapture = ({
             </div>
 
             {!loading && (
-              <div className="flex items-center space-x-6 text-xs lg:text-sm text-slate-500">
+              <div className="flex items-center space-x-6 text-xs lg:text-sm opacity-70">
                 <div className="flex items-center space-x-2">
                   <Monitor className="w-4 h-4" />
                   <span>Screen Share</span>
@@ -136,7 +136,7 @@ const ScreenCapture = ({
                 className={`flex items-center cursor-pointer space-x-2 px-2 py-2 rounded-xl text-sm font-medium transition-all duration-200 shadow-xl hover:shadow-xl ${
                   autoMode
                     ? 'bg-green-500 text-white'
-                    : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white'
+                      : 'bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] hover:from-[#E85F00] hover:to-[#FF8A2A] text-white'
                 }`}
               >
                 {autoMode ? (
@@ -154,11 +154,11 @@ const ScreenCapture = ({
               </button>
 
               {!autoMode && (
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-1 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-normal break-words max-w-52 w-full z-10">
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-base-100/95 backdrop-blur text-base-content text-xs rounded-2xl border border-base-300 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-normal break-words max-w-52 w-full z-10">
                   Enable automatic screenshots every minute. So if your coding
                   task has focus detection, you can always keep it on the needed
                   screen
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-base-100"></div>
                 </div>
               )}
             </div>
@@ -200,7 +200,7 @@ const ScreenCapture = ({
             </div>
 
             {!capturing && !loading && (
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] opacity-0 group-hover:opacity-15 transition-opacity duration-200"></div>
             )}
           </button>
         </div>

@@ -28,9 +28,9 @@ const CaptureButton: React.FC<CaptureButtonProps> = ({
       className={`
         relative flex items-center gap-2 px-3 py-2 
         font-medium text-white rounded-xl
-        bg-gradient-to-r from-amber-500 to-orange-600
-        hover:from-amber-600 hover:to-orange-700
-        focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2
+        bg-gradient-to-r from-[#FF6B00] to-[#FFA63D]
+        hover:from-[#E85F00] hover:to-[#FF8A2A]
+        focus:outline-none focus:ring-4 focus:ring-primary/15
         shadow-md hover:shadow-xl
         transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer

@@ -30,12 +30,12 @@ export default function CopilotPromptEditor() {
     router.push('/panel');
   };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 p-6 w-full flex flex-col items-center justify-center">
+    <div className="w-full">
       <div className="max-w-4xl w-full mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl border border-orange-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-6">
+        <div className="bg-base-100/80 backdrop-blur rounded-3xl shadow-xl border border-base-300 overflow-hidden">
+          <div className="bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] px-8 py-6">
             <div className="flex items-center">
-              <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl mr-4">
+              <div className="flex items-center justify-center w-11 h-11 bg-white/20 rounded-2xl mr-4">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -49,12 +49,12 @@ export default function CopilotPromptEditor() {
             </div>
           </div>
 
-          <div className="p-8">
+          <div className="p-6 sm:p-8">
             <div className="space-y-6">
               <div>
                 <label
                   htmlFor="prompt"
-                  className="flex items-center text-sm font-semibold text-slate-700 mb-3"
+                  className="flex items-center text-sm font-semibold text-base-content mb-3"
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   System Prompt
@@ -62,17 +62,17 @@ export default function CopilotPromptEditor() {
                 <div className="relative">
                   <textarea
                     id="prompt"
-                    className="w-full p-4 pb-8 border-2 border-orange-200 rounded-xl text-sm font-mono leading-relaxed resize-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-200 bg-orange-50/30"
+                    className="w-full p-4 pb-8 border border-base-300 rounded-2xl text-sm font-mono leading-relaxed resize-none focus:border-primary/70 focus:ring-4 focus:ring-primary/10 transition-all duration-200 bg-base-100/80"
                     rows={16}
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="Enter your system prompt here..."
                   />
-                  <div className="absolute bottom-3 right-3 text-xs text-slate-400 bg-white px-2 py-1 rounded-md shadow-sm">
+                  <div className="absolute bottom-3 right-3 text-xs opacity-60 bg-base-100 px-2 py-1 rounded-md shadow-sm">
                     {prompt.length} characters
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs opacity-70 mt-1">
                   💡 Tip: Include your target role, years of experience, and key
                   skills in your prompt
                 </p>
@@ -81,9 +81,7 @@ export default function CopilotPromptEditor() {
                 <button
                   type="button"
                   onClick={savePrompt}
-                  className="cursor-pointer
-                    flex items-center px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200
-                    bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
+                  className="cursor-pointer flex items-center px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   Save Changes
@@ -95,7 +93,7 @@ export default function CopilotPromptEditor() {
       </div>
 
       <div className="mt-6 text-center">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm opacity-70">
           Your system prompt defines how the AI assistant behaves and responds
           to questions.
         </p>

@@ -51,7 +51,7 @@ const ClearContextButton = ({
           onClick={onClick}
           disabled={disabled}
           className="cursor-pointer flex items-center justify-center w-8 h-8
-      bg-gray-100 text-gray-700 rounded-lg font-medium transition-all duration-200 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+      bg-base-200/40 text-base-content rounded-xl font-medium transition-all duration-200 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-error/10"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-label="Clear recording (D)"
@@ -63,8 +63,8 @@ const ClearContextButton = ({
             <Trash2 className="w-4 h-4" />
           )}
         </motion.button>
-        <p className="text-xs text-gray-500 mt-1">
-          Press <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">D</kbd>
+        <p className="text-xs opacity-70 mt-1">
+          Press <kbd className="px-1 py-0.5 bg-base-200 border border-base-300 rounded text-xs">D</kbd>
         </p>
       </div>
     );
@@ -74,7 +74,7 @@ const ClearContextButton = ({
     <motion.button
       onClick={handleClick}
       disabled={isSending || disabled}
-      className="flex cursor-pointer lg:flex-1 items-center justify-center gap-3 w-10 h-10 lg:w-fit lg:h-fit p-1 lg:p-4 bg-gray-100 text-gray-700 rounded-lg font-medium transition-all duration-200 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+      className="flex cursor-pointer lg:flex-1 items-center justify-center gap-3 w-10 h-10 lg:w-fit lg:h-fit p-1 lg:p-4 bg-base-200/40 text-base-content rounded-2xl font-medium transition-all duration-200 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-error/10"
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       aria-label="Clear recording (D)"
@@ -88,7 +88,7 @@ const ClearContextButton = ({
       <span className="hidden lg:block font-semibold">
         {isSending ? 'Clearing...' : 'Clear'}
       </span>
-      <kbd className="hidden lg:block px-2 py-1 bg-gray-300 rounded text-xs">
+      <kbd className="hidden lg:block px-2 py-1 bg-base-200 border border-base-300 rounded text-xs">
         D
       </kbd>
     </motion.button>

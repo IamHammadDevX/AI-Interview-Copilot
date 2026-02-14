@@ -27,8 +27,8 @@ export default function CheckEmailClient({ email }: { email: string }) {
   };
 
   return (
-    <div className="min-h-screen bg-base-200">
-      <div className="navbar bg-base-100/80 backdrop-blur shadow-sm sticky top-0 z-50 border-b border-base-300">
+    <div className="min-h-screen">
+      <div className="navbar bg-base-100/70 backdrop-blur border-b border-base-300 sticky top-0 z-50">
         <div className="flex-1">
           <Link className="btn btn-ghost text-xl" href="/">
             AI Interview Copilot
@@ -37,9 +37,15 @@ export default function CheckEmailClient({ email }: { email: string }) {
       </div>
 
       <main className="px-4 py-10">
-        <div className="max-w-xl mx-auto card bg-base-100 shadow-lg border border-base-300">
+        <div className="max-w-xl mx-auto card bg-base-100/80 backdrop-blur shadow-xl border border-base-300 overflow-hidden rounded-3xl">
+          <div className="bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] px-6 py-7">
+            <h1 className="text-2xl font-bold text-white">Confirm your email</h1>
+            <p className="text-white/90 text-sm mt-1">
+              Open the link we sent to finish setting up your account.
+            </p>
+          </div>
+
           <div className="card-body space-y-3">
-            <h1 className="text-2xl font-bold">Confirm your email</h1>
             <p className="opacity-80">
               We sent a confirmation link to{" "}
               <span className="font-semibold">{email || "your email"}</span>.
@@ -89,4 +95,3 @@ export default function CheckEmailClient({ email }: { email: string }) {
     </div>
   );
 }
-
