@@ -22,10 +22,13 @@ export default function useChatService({
   const [transcript, setTranscript] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isSearchingDocs, setIsSearchingDocs] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const storageKey = `chat-history:${projectId ?? 'global'}`;
+
   useEffect(() => {
-    const savedHistory = localStorage.getItem('chat-history');
+    const savedHistory = localStorage.getItem(storageKey);
     if (savedHistory) {
       try {
         const parsed: Turn[] = JSON.parse(savedHistory);
@@ -34,14 +37,17 @@ export default function useChatService({
       } catch (e) {
         console.error('Failed to parse saved turns from localStorage');
       }
+    } else {
+      setChatHistory([]);
+      chatHistoryRef.current = [];
     }
-  }, []);
+  }, [storageKey]);
 
   useEffect(() => {
     if (!isStreaming && chatHistory.length > 0) {
-      localStorage.setItem('chat-history', JSON.stringify(chatHistory));
+      localStorage.setItem(storageKey, JSON.stringify(chatHistory));
     }
-  }, [isStreaming, chatHistory]);
+  }, [isStreaming, chatHistory, storageKey]);
 
   const handleTranscript = async (question: string, imageDataUrl?: string) => {
     if (!question.trim()) return;
@@ -53,6 +59,7 @@ export default function useChatService({
     addMessageToHistory('user', question);
 
     setIsThinking(true);
+    setIsSearchingDocs(false);
 
     try {
       abortControllerRef.current = new AbortController();
@@ -61,19 +68,93 @@ export default function useChatService({
 
       const shouldUseRag = Boolean(projectId) && !imageDataUrl;
 
-      const res = shouldUseRag
-        ? await fetch(`/api/projects/${projectId}/rag`, {
+      if (shouldUseRag) {
+        setIsSearchingDocs(true);
+
+        const searchRes = await fetch(`/api/projects/${projectId}/rag/search`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+          signal: abortControllerRef.current.signal,
+        });
+
+        const searchData = (await searchRes.json().catch(() => null)) as null | {
+          matches?: Array<{ content: string; similarity: number }>
+          confidence?: 'high' | 'medium' | 'low'
+          error?: string
+        }
+
+        if (!searchRes.ok) {
+          throw new Error(searchData?.error ?? 'Document search failed')
+        }
+
+        const matches = searchData?.matches ?? []
+        const confidence = searchData?.confidence ?? 'low'
+
+        if (matches.length > 0) {
+          const answerRes = await fetch(`/api/projects/${projectId}/rag/answer`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question }),
+            body: JSON.stringify({ question, matches, confidence }),
             signal: abortControllerRef.current.signal,
           })
-        : await makeCopilotRequest({
-            question,
-            history: historyToSend,
-            imageDataUrl,
-            signal: abortControllerRef.current.signal,
-          });
+
+          const answerData = (await answerRes.json().catch(() => null)) as null | {
+            answer?: string
+            source?: 'document'
+            confidence?: 'high' | 'medium' | 'low'
+            error?: string
+          }
+
+          setIsThinking(false)
+          setIsSearchingDocs(false)
+
+          if (!answerRes.ok) {
+            throw new Error(answerData?.error ?? 'RAG answer failed')
+          }
+
+          addMessageToHistory('assistant', answerData?.answer ?? '', {
+            source: 'document',
+            confidence: (answerData?.confidence ?? confidence) as any,
+          })
+          return
+        }
+
+        setIsSearchingDocs(false)
+
+        const baseRes = await fetch(`/api/projects/${projectId}/rag/base`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+          signal: abortControllerRef.current.signal,
+        })
+
+        const baseData = (await baseRes.json().catch(() => null)) as null | {
+          answer?: string
+          source?: 'base-ai'
+          confidence?: 'high' | 'medium' | 'low'
+          error?: string
+        }
+
+        setIsThinking(false)
+
+        if (!baseRes.ok) {
+          throw new Error(baseData?.error ?? 'AI search failed')
+        }
+
+        addMessageToHistory('assistant', baseData?.answer ?? '', {
+          source: 'base-ai',
+          confidence: 'low',
+        })
+        return
+      }
+
+      const res = await makeCopilotRequest({
+        question,
+        history: historyToSend,
+        imageDataUrl,
+        signal: abortControllerRef.current.signal,
+      });
 
       if (!res.ok) {
         let code = '';
@@ -100,6 +181,7 @@ export default function useChatService({
 
       if (contentType.includes('application/json')) {
         setIsThinking(false);
+        setIsSearchingDocs(false);
         const data = (await res.json().catch(() => null)) as null | {
           answer?: string;
           source?: 'document' | 'internet' | 'base-ai';
@@ -118,9 +200,10 @@ export default function useChatService({
       }
 
       setIsThinking(false);
+      setIsSearchingDocs(false);
       setIsStreaming(true);
 
-      addMessageToHistory('assistant', '');
+      addMessageToHistory('assistant', '', { source: 'base-ai', confidence: 'low' });
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
@@ -172,6 +255,7 @@ export default function useChatService({
     } finally {
       setIsThinking(false);
       setIsStreaming(false);
+      setIsSearchingDocs(false);
       abortControllerRef.current = null;
     }
   };
@@ -189,7 +273,7 @@ export default function useChatService({
   const clearChatHistory = () => {
     chatHistoryRef.current = [];
     setChatHistory([]);
-    localStorage.removeItem('chat-history');
+    localStorage.removeItem(storageKey);
   };
 
   const updateLastMessageInHistory = (content: string) => {
@@ -212,6 +296,7 @@ export default function useChatService({
     chatHistory,
     isThinking,
     isStreaming,
+    isSearchingDocs,
     transcript,
     handleTranscript,
     setTranscript,

@@ -13,7 +13,11 @@ function toPgVector(vec: number[]) {
   return `[${vec.join(",")}]`;
 }
 
-export async function searchSimilarChunks(projectId: string, query: string) {
+export async function searchSimilarChunks(
+  projectId: string,
+  query: string,
+  { minSimilarity = 0.75 }: { minSimilarity?: number } = {}
+) {
   const supabase = createSupabaseServerClient();
 
   const embedding = await generateEmbedding(query);
@@ -22,7 +26,7 @@ export async function searchSimilarChunks(projectId: string, query: string) {
     p_project_id: projectId,
     p_query_embedding: toPgVector(embedding),
     p_match_count: 5,
-    p_min_similarity: 0.75,
+    p_min_similarity: minSimilarity,
   });
 
   if (error) throw new Error(error.message);
@@ -39,4 +43,3 @@ export async function searchSimilarChunks(projectId: string, query: string) {
     similarity: r.similarity,
   })) satisfies SimilarChunk[];
 }
-

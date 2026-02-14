@@ -24,7 +24,24 @@ export default async function PanelPage({
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) redirect('/login')
+  if (!user) redirect('/login?redirectTo=/panel')
 
-  return <PanelClient projectId={searchParams.projectId ?? null} />
+  const requestedProjectId = searchParams.projectId
+
+  if (!requestedProjectId) {
+    const { data: latestProject } = await supabase
+      .from('projects')
+      .select('id')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (!latestProject?.id) {
+      redirect('/dashboard/projects')
+    }
+
+    redirect(`/panel?projectId=${encodeURIComponent(latestProject.id)}`)
+  }
+
+  return <PanelClient projectId={requestedProjectId} />
 }

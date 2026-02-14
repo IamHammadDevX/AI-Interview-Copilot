@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useImperativeHandle } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -11,16 +11,21 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-const ChatInput = ({
-  onSend,
-  isLoading = false,
-  isStreaming = false,
-  placeholder = 'Type or edit your question here…',
-  disabled = false,
-}: ChatInputProps) => {
+const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(function ChatInput(
+  {
+    onSend,
+    isLoading = false,
+    isStreaming = false,
+    placeholder = 'Type or edit your question here…',
+    disabled = false,
+  },
+  ref
+) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const blurTimeoutRef = useRef(null);
   const [value, setValue] = React.useState('');
+
+  useImperativeHandle(ref, () => inputRef.current as HTMLTextAreaElement, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
@@ -97,6 +102,6 @@ const ChatInput = ({
       </div>
     </div>
   );
-};
+});
 
 export default ChatInput;

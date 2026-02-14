@@ -74,7 +74,17 @@ export async function generateAnswer(
   projectId: string,
   question: string
 ): Promise<RagResult> {
-  const matches = await searchSimilarChunks(projectId, question);
+  const primaryMatches = await searchSimilarChunks(projectId, question, {
+    minSimilarity: 0.75,
+  });
+  const secondaryMatches =
+    primaryMatches.length > 0
+      ? []
+      : await searchSimilarChunks(projectId, question, { minSimilarity: 0.65 });
+
+  const matches = primaryMatches.length > 0 ? primaryMatches : secondaryMatches;
+  const docConfidence: RagConfidence =
+    primaryMatches.length > 0 ? "high" : matches.length > 0 ? "medium" : "low";
 
   if (matches.length > 0) {
     const context = matches
@@ -94,7 +104,7 @@ export async function generateAnswer(
     return {
       answer,
       source: "document",
-      confidence: "high",
+      confidence: docConfidence,
       metadata: {
         matchedChunks: matches.map((m) => m.content),
         similarityScores: matches.map((m) => m.similarity),

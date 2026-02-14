@@ -77,6 +77,9 @@ const Bubble = memo(function Bubble({
     if (turn.meta?.source === 'internet') {
       return 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-50'
     }
+    if (turn.meta?.source === 'base-ai') {
+      return 'border-border bg-muted/40 text-foreground'
+    }
     return 'border-border bg-card/70 text-foreground'
   }, [isAssistant, turn.meta?.source])
 
@@ -107,10 +110,17 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
   const [captureStream, setCaptureStream] = useState<MediaStream | null>(null)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const bottomRef = useRef<HTMLSpanElement | null>(null)
+  const questionInputRef = useRef<HTMLTextAreaElement | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const { chatHistory, isThinking, isStreaming, handleTranscript, clearChatHistory } =
-    useChatService({ projectId })
+  const {
+    chatHistory,
+    isThinking,
+    isStreaming,
+    isSearchingDocs,
+    handleTranscript,
+    clearChatHistory,
+  } = useChatService({ projectId })
 
   const [shouldStopCapture, setShouldStopCapture] = useState(false)
   const [promptOpen, setPromptOpen] = useState(false)
@@ -119,6 +129,26 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatHistory, isThinking, isTranscribing, isStreaming])
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isMod = e.ctrlKey || e.metaKey
+      if (!isMod) return
+      if (e.key.toLowerCase() !== 'a') return
+
+      const el = questionInputRef.current
+      if (!el) return
+
+      if (document.activeElement !== el) {
+        e.preventDefault()
+        el.focus()
+        el.select()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   useEffect(() => {
     requestMic()
@@ -190,7 +220,7 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
   )
 
   return (
-    <div className="min-h-screen w-full">
+    <div className="h-dvh w-full overflow-hidden">
       <UpdatePromptModal open={promptOpen} onOpenChange={setPromptOpen} />
       <ConfirmDeleteModal
         open={deleteOpen}
@@ -198,8 +228,8 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
         handleClick={clearChatHistory}
       />
 
-      <div className="mx-auto max-w-7xl px-2 md:px-6 py-2 md:py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 grid-rows-[auto_1fr_auto] gap-2 lg:gap-4">
+      <div className="mx-auto max-w-7xl h-full px-2 md:px-6 py-2 md:py-6">
+        <div className="grid h-full grid-cols-1 lg:grid-cols-2 grid-rows-[auto_1fr_auto] gap-2 lg:gap-4">
           <div className="rounded-[var(--radius)] border border-border bg-card/70 backdrop-blur shadow-xl flex items-center justify-center max-h-64 lg:max-h-[420px] overflow-hidden">
             <ScreenCapture
               handleScreenshot={handleScreenshot}
@@ -209,7 +239,7 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
             />
           </div>
 
-          <div className="flex flex-col row-span-2 bg-card/80 backdrop-blur p-2 lg:p-4 rounded-[var(--radius)] border border-border shadow-xl overflow-hidden min-h-[620px]">
+          <div className="flex flex-col row-span-2 bg-card/80 backdrop-blur p-2 lg:p-4 rounded-[var(--radius)] border border-border shadow-xl overflow-hidden min-h-0">
             <header className="flex items-center justify-between gap-3 text-lg sm:text-xl font-semibold px-2 py-2">
               <span className="truncate">Interview Copilot</span>
 
@@ -248,7 +278,15 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
               </DropdownMenu>
             </header>
 
-            <div className="flex-1 overflow-y-auto pr-2 space-y-3 pb-4">
+            {!projectId && (
+              <div className="px-2 pb-2">
+                <Alert className="text-sm">
+                  Open the panel from a specific project to enable document search.
+                </Alert>
+              </div>
+            )}
+
+            <div className="flex-1 min-h-0 overflow-y-auto pr-2 space-y-3 pb-4">
               {renderTurns.map((t, i) => (
                 <Bubble
                   key={i}
@@ -258,12 +296,21 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
               ))}
 
               {isTranscribing && <TranscribingAnimation />}
-              {isThinking && <ThinkingAnimation />}
+              {isThinking && (
+                <ThinkingAnimation
+                  label={
+                    isSearchingDocs
+                      ? 'Searching from given documents...'
+                      : 'AI Searches...'
+                  }
+                />
+              )}
               <span ref={bottomRef} />
             </div>
 
             <div className="border-t border-border bg-background/60 backdrop-blur p-2 rounded-[calc(var(--radius)-6px)]">
               <ChatInput
+                ref={questionInputRef}
                 onSend={sendTranscript}
                 isLoading={isThinking || isPending}
                 isStreaming={isStreaming}
