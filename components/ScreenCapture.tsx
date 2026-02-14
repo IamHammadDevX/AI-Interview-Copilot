@@ -22,6 +22,16 @@ import { useScreenshot } from '@/hooks/useScreenshot';
 type Props = {
   // eslint-disable-next-line no-unused-vars
   onStreamAvailable: (stream: MediaStream | null) => void;
+  // eslint-disable-next-line no-unused-vars
+  onSourcesAvailable?: (
+    _sources:
+      | {
+          mixed: MediaStream
+          system: MediaStream
+          mic: MediaStream
+        }
+      | null
+  ) => void;
   externalStop?: boolean;
   onExternalStopHandled?: () => void;
   // eslint-disable-next-line no-unused-vars
@@ -30,12 +40,13 @@ type Props = {
 
 const ScreenCapture = ({
       onStreamAvailable,
+      onSourcesAvailable,
       externalStop = false,
       onExternalStopHandled,
       handleScreenshot,
   }: Props) => {
     const { videoRef, capturing, loading, startCapture, stopCapture } =
-      useScreenCapture(onStreamAvailable);
+      useScreenCapture(onStreamAvailable, onSourcesAvailable);
   
     const { takeScreenshot } = useScreenshot(
       videoRef,

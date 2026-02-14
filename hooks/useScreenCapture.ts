@@ -2,7 +2,17 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 
 export const useScreenCapture = (
   // eslint-disable-next-line no-unused-vars
-  onStreamAvailable: (stream: MediaStream | null) => void
+  onStreamAvailable: (stream: MediaStream | null) => void,
+  // eslint-disable-next-line no-unused-vars
+  onSourcesAvailable?: (
+    sources:
+      | {
+          mixed: MediaStream
+          system: MediaStream
+          mic: MediaStream
+        }
+      | null
+  ) => void
 ) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const meetStreamRef = useRef<MediaStream | null>(null);
@@ -41,6 +51,11 @@ export const useScreenCapture = (
       }
 
       onStreamAvailable(dest.stream);
+      onSourcesAvailable?.({
+        mixed: dest.stream,
+        system: new MediaStream(meet.getAudioTracks()),
+        mic: new MediaStream(mic.getAudioTracks()),
+      });
 
       meetStreamRef.current = meet;
       micStreamRef.current = mic;
@@ -50,7 +65,7 @@ export const useScreenCapture = (
     } finally {
       setLoading(false);
     }
-  }, [onStreamAvailable]);
+  }, [onSourcesAvailable, onStreamAvailable]);
 
   const stopCapture = useCallback(() => {
     meetStreamRef.current?.getTracks().forEach((t) => t.stop());
@@ -59,8 +74,9 @@ export const useScreenCapture = (
     if (videoRef.current) videoRef.current.srcObject = null;
 
     onStreamAvailable(null);
+    onSourcesAvailable?.(null);
     setCapturing(false);
-  }, [onStreamAvailable]);
+  }, [onSourcesAvailable, onStreamAvailable]);
 
   // Handle stream end events
   useEffect(() => {

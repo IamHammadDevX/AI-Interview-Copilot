@@ -118,6 +118,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      interview_transcripts: {
+        Row: {
+          id: string;
+          project_id: string;
+          speaker: string;
+          text: string;
+          timestamp_ms: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          speaker: string;
+          text: string;
+          timestamp_ms: number;
+          created_at?: string;
+        };
+        Update: {
+          speaker?: string;
+          text?: string;
+          timestamp_ms?: number;
+        };
+        Relationships: [];
+      };
       user_settings: {
         Row: {
           id: string;

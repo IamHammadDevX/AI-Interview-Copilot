@@ -108,6 +108,14 @@ const Bubble = memo(function Bubble({
 export default function PanelClient({ projectId }: { projectId?: string | null }) {
   const { requestMic } = useMicPermission()
   const [captureStream, setCaptureStream] = useState<MediaStream | null>(null)
+  const [captureSources, setCaptureSources] = useState<
+    | {
+        mixed: MediaStream
+        system: MediaStream
+        mic: MediaStream
+      }
+    | null
+  >(null)
   const [isTranscribing, setIsTranscribing] = useState(false)
   const bottomRef = useRef<HTMLSpanElement | null>(null)
   const questionInputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -234,6 +242,7 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
             <ScreenCapture
               handleScreenshot={handleScreenshot}
               onStreamAvailable={setCaptureStream}
+              onSourcesAvailable={setCaptureSources}
               externalStop={shouldStopCapture}
               onExternalStopHandled={handleExternalStopHandled}
             />
@@ -323,6 +332,8 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
           <div className="bg-card/80 backdrop-blur p-2 lg:p-4 rounded-[var(--radius)] border border-border shadow-xl flex flex-col gap-4">
             <Recorder
               audioStream={captureStream}
+              audioSources={captureSources}
+              projectId={projectId ?? null}
               onAddUserTurn={(text) => handleTranscript(text)}
               onTranscribingChange={setIsTranscribing}
             />

@@ -1,11 +1,13 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import ProjectDocumentsUploader from "./ProjectDocumentsUploader";
+import { unstable_noStore as noStore } from "next/cache";
 
 export default async function ProjectDocumentsSection({
   projectId,
 }: {
   projectId: string;
 }) {
+  noStore();
   const supabase = createSupabaseServerClient();
 
   const { data: docs, error } = await supabase
@@ -24,4 +26,3 @@ export default async function ProjectDocumentsSection({
 
   return <ProjectDocumentsUploader projectId={projectId} initialDocuments={docs ?? []} />;
 }
-

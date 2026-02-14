@@ -25,6 +25,7 @@ export default function ProjectDocumentsUploader({
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [documents, setDocuments] = useState<DocRow[]>(initialDocuments);
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<
     "idle" | "uploading" | "processing" | "ready" | "error"
@@ -33,7 +34,11 @@ export default function ProjectDocumentsUploader({
   const pollTimerRef = useRef<number | null>(null);
   const lastProgressRef = useRef(0);
 
-  const count = initialDocuments.length;
+  useEffect(() => {
+    setDocuments(initialDocuments);
+  }, [initialDocuments]);
+
+  const count = documents.length;
 
   const accept = useMemo(
     () =>
@@ -54,16 +59,18 @@ export default function ProjectDocumentsUploader({
     };
   }, []);
 
-  const startPollingStatus = (documentId: string) => {
+  const startPollingStatus = (documentId: string): void => {
     if (pollTimerRef.current) window.clearInterval(pollTimerRef.current);
 
-    pollTimerRef.current = window.setInterval(async () => {
+    pollTimerRef.current = window.setInterval(async (): Promise<void> => {
       try {
         const res = await fetch(
           `/api/projects/${projectId}/documents/${documentId}`
         );
         if (!res.ok) return;
-        const data = (await res.json().catch(() => null)) as null | {
+        const data = await res
+          .json()
+          .catch((): null => null) as null | {
           status?: "uploaded" | "processing" | "ready" | "error";
           error?: string | null;
         };
@@ -101,7 +108,7 @@ export default function ProjectDocumentsUploader({
     }, 1200);
   };
 
-  const upload = async () => {
+  const upload = async (): Promise<void> => {
     if (!file) return;
     setError(null);
     setIsUploading(true);
@@ -155,7 +162,7 @@ export default function ProjectDocumentsUploader({
     }
   };
 
-  const deleteDocument = async (doc: DocRow) => {
+  const deleteDocument = async (doc: DocRow): Promise<void> => {
     if (doc.status === 'processing') {
       setError('Document is processing. Please wait until it finishes.')
       return
@@ -169,11 +176,15 @@ export default function ProjectDocumentsUploader({
         `/api/projects/${projectId}/documents/${doc.id}`,
         { method: 'DELETE' }
       )
-      const data = (await res.json().catch(() => null)) as any
+      const data = await res
+        .json()
+        .catch((): null => null) as null | { error?: string }
       if (!res.ok) {
         setError(data?.error ?? 'Failed to delete document')
         return
       }
+
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id))
       startTransition(() => router.refresh())
     } catch (e: any) {
       setError(typeof e?.message === 'string' ? e.message : 'Failed to delete document')
@@ -260,10 +271,10 @@ export default function ProjectDocumentsUploader({
 
         <div className="border-t border-border pt-4">
           <div className="grid gap-2">
-            {initialDocuments.length === 0 ? (
+            {documents.length === 0 ? (
               <div className="text-sm text-muted-foreground">No documents uploaded yet.</div>
             ) : (
-              initialDocuments.map((d) => (
+              documents.map((d) => (
                 <div
                   key={d.id}
                   className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-border bg-background/60 p-3"

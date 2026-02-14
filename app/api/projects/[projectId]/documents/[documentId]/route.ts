@@ -105,7 +105,24 @@ export async function DELETE(
     );
   }
 
-  await supabase.from("embeddings").delete().eq("document_id", documentId);
+  const { error: embErr } = await supabase
+    .from("embeddings")
+    .delete()
+    .eq("document_id", documentId);
+
+  if (embErr) {
+    return NextResponse.json({ error: embErr.message }, { status: 500 });
+  }
+
+  const { error: delErr } = await supabase
+    .from("documents")
+    .delete()
+    .eq("id", documentId)
+    .eq("project_id", projectId);
+
+  if (delErr) {
+    return NextResponse.json({ error: delErr.message }, { status: 500 });
+  }
 
   if (doc.file_path) {
     const prefix = `${user.id}/${projectId}/${documentId}`;
@@ -120,16 +137,6 @@ export async function DELETE(
     }
 
     await supabase.storage.from("project-documents").remove([doc.file_path]);
-  }
-
-  const { error: delErr } = await supabase
-    .from("documents")
-    .delete()
-    .eq("id", documentId)
-    .eq("project_id", projectId);
-
-  if (delErr) {
-    return NextResponse.json({ error: delErr.message }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });
