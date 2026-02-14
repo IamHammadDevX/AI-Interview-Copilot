@@ -1,141 +1,93 @@
-/* eslint-disable no-unused-vars */
+'use client'
+
+import { Button } from '@/components/ui/button'
 import {
-  getCurrentPrompt,
-  handleSaveNewPrompt,
-} from '@/libs/copilotPromptStore';
-import { FileText, Save, Sparkles, X } from 'lucide-react';
-import { RefObject, useEffect, useState } from 'react';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { getCurrentPrompt, handleSaveNewPrompt } from '@/libs/copilotPromptStore'
+import type { DialogProps } from '@radix-ui/react-dialog'
+import { useEffect, useRef, useState } from 'react'
 
-interface ModalProps {
-  modalRef: RefObject<HTMLDialogElement>;
-}
-
-const UpdatePromptModal = ({ modalRef }: ModalProps) => {
-  const [prompt, setPrompt] = useState<string>('');
+export default function UpdatePromptModal({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: NonNullable<DialogProps['onOpenChange']>
+}) {
+  const initialPromptRef = useRef<string>('')
+  const [prompt, setPrompt] = useState('')
 
   useEffect(() => {
-    const dialog = modalRef.current;
+    if (!open) return
+    const currentPrompt = getCurrentPrompt() || 'You are a helpful AI assistant.'
+    initialPromptRef.current = currentPrompt
+    setPrompt(currentPrompt)
+  }, [open])
 
-    const handleOpen = async () => {
-      if (dialog?.open) {
-        const currentPrompt = getCurrentPrompt();
-        if (!currentPrompt) {
-          setPrompt('You are a helpful AI assistant.');
-          return;
-        }
-        setPrompt(currentPrompt);
-      }
-    };
-
-    if (dialog?.open) {
-      handleOpen();
-    }
-
-    const observer = new MutationObserver(() => {
-      if (dialog?.open) {
-        handleOpen();
-      }
-    });
-
-    if (dialog) {
-      observer.observe(dialog, { attributes: true, attributeFilter: ['open'] });
-    }
-
-    return () => observer.disconnect();
-  }, [modalRef]);
-
-
-  const savePrompt = async () => {
-    const isSaved = handleSaveNewPrompt(prompt);
-    if (!isSaved) {
-      console.error('Failed to save prompt');
-      return;
-    }
-    modalRef.current?.close();
-  };
+  const close = () => {
+    onOpenChange(false)
+  }
 
   const handleCancel = () => {
-    setPrompt(prompt);
-    modalRef.current?.close();
-  };
+    setPrompt(initialPromptRef.current)
+    close()
+  }
+
+  const savePrompt = () => {
+    const isSaved = handleSaveNewPrompt(prompt)
+    if (!isSaved) return
+    close()
+  }
 
   return (
-    <dialog ref={modalRef} className="modal modal-bottom sm:modal-middle">
-      <div className="modal-box max-w-4xl w-full max-h-[90vh] p-0 overflow-hidden bg-base-100/90 backdrop-blur border border-base-300 rounded-3xl">
-        <div className="bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-lg mr-3">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-white">
-                Update System Prompt
-              </h3>
-              <p className="text-white/90 text-sm">
-                Quick edit your AI assistant&apos;s behavior
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleCancel}
-            className="text-white/80 hover:text-white transition-colors p-1"
-          >
-            <X className="h-5 w-5" />
-          </button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl p-0 overflow-hidden">
+        <div className="bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] px-6 py-5">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-white">Update system prompt</DialogTitle>
+            <DialogDescription className="text-white/90">
+              Quick edit your AI assistant&apos;s behavior.
+            </DialogDescription>
+          </DialogHeader>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="modal-prompt"
-                className="flex items-center text-sm font-semibold text-base-content mb-2"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                System Prompt
-              </label>
-              <div className="relative">
-                <textarea
-                  id="modal-prompt"
-                  className="w-full p-3 pb-8 border border-base-300 rounded-2xl text-sm font-mono leading-relaxed resize-none focus:border-primary/60 focus:ring-4 focus:ring-primary/10 transition-all duration-200 bg-base-100/80"
-                  rows={12}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Enter your system prompt here..."
-                />
-                <div className="absolute bottom-3 right-3 text-xs opacity-60 bg-base-100 px-2 py-1 rounded-md shadow-sm">
-                  {prompt.length} characters
-                </div>
-              </div>
-              <p className="text-xs opacity-70 mt-1">
-                💡 Tip: Include your target role, years of experience, and key
-                skills in your prompt
-              </p>
+        <div className="p-6 grid gap-2">
+          <Label htmlFor="panel-prompt">System prompt</Label>
+          <div className="relative">
+            <Textarea
+              id="panel-prompt"
+              className="min-h-[280px] font-mono"
+              rows={12}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Enter your system prompt here..."
+            />
+            <div className="absolute bottom-3 right-3 text-xs text-muted-foreground bg-background px-2 py-1 rounded-md border border-border">
+              {prompt.length} characters
             </div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Tip: include your target role, years of experience, and key skills.
           </div>
         </div>
 
-        <div className="border-t border-base-300 px-6 py-4 bg-base-200/40">
-          <div className="flex justify-between items-center gap-3">
-            <button
-              onClick={handleCancel}
-              className="btn btn-ghost"
-            >
-              Close
-            </button>
-
-            <button
-              onClick={savePrompt}
-              className="btn btn-primary"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Update Prompt
-            </button>
-          </div>
-        </div>
-      </div>
-    </dialog>
-  );
-};
-
-export default UpdatePromptModal;
+        <DialogFooter className="px-6 py-4 border-t border-border bg-muted/30">
+          <Button type="button" variant="ghost" onClick={handleCancel}>
+            Close
+          </Button>
+          <Button type="button" onClick={savePrompt}>
+            Update prompt
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ChatInputProps {
   // eslint-disable-next-line no-unused-vars
@@ -63,7 +64,7 @@ const ChatInput = ({
 
   return (
     <div className="lg:mt-4 relative">
-      <div className="relative flex items-center gap-2 p-1 lg:p-3 bg-base-200/40 rounded-2xl border border-base-300 focus-within:border-primary/60 focus-within:ring-4 focus-within:ring-primary/10 transition-all">
+      <div className="relative flex items-center gap-2 p-1 lg:p-3 bg-muted/40 rounded-2xl border border-border focus-within:border-primary/60 focus-within:ring-4 focus-within:ring-ring/30 transition-all">
         <textarea
           ref={inputRef}
           value={value}
@@ -72,7 +73,7 @@ const ChatInput = ({
           placeholder={placeholder}
           disabled={disabled}
           rows={1}
-          className="flex-1 bg-transparent border-none outline-none resize-none text-base-content placeholder:opacity-60 text-sm leading-relaxed max-h-32"
+          className="flex-1 bg-transparent border-none outline-none resize-none text-foreground placeholder:text-muted-foreground text-sm leading-relaxed max-h-32"
           onInput={(e) => {
             const target = e.target as HTMLTextAreaElement;
             target.style.height = 'auto';
@@ -80,19 +81,19 @@ const ChatInput = ({
           }}
         />
 
-        <button
+        <Button
           onClick={handleSend}
           disabled={!canSend}
-          className={`btn btn-square btn-sm flex-shrink-0 ${
-            canSend ? 'btn-primary' : 'btn-ghost opacity-40'
-          }`}
+          size="icon"
+          variant={canSend ? 'default' : 'ghost'}
+          className={canSend ? '' : 'opacity-40'}
         >
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Send className="w-4 h-4" />
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

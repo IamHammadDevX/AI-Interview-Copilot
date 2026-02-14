@@ -1,64 +1,71 @@
 @import 'tailwindcss';
 @plugin "@tailwindcss/typography";
-@plugin "daisyui" {
-  themes: copilot --default;
+
+@theme {
+  --color-background: oklch(0.984 0.01 70);
+  --color-foreground: oklch(0.2 0.02 255);
+
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.2 0.02 255);
+
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.2 0.02 255);
+
+  --color-primary: #ff6b00;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: oklch(0.97 0.01 70);
+  --color-secondary-foreground: oklch(0.2 0.02 255);
+
+  --color-muted: oklch(0.96 0.01 255);
+  --color-muted-foreground: oklch(0.46 0.02 255);
+
+  --color-accent: oklch(0.97 0.01 70);
+  --color-accent-foreground: oklch(0.2 0.02 255);
+
+  --color-destructive: oklch(0.62 0.2 25);
+  --color-destructive-foreground: #ffffff;
+
+  --color-border: oklch(0.9 0.01 255);
+  --color-input: oklch(0.9 0.01 255);
+  --color-ring: rgba(255, 107, 0, 0.35);
+
+  --radius: 1rem;
 }
 
-[data-theme='copilot'] {
-  --p: 0.744 0.19 45;
-  --pc: 1 0 0;
-
-  --a: 0.77 0.12 205;
-  --ac: 1 0 0;
-
-  --b1: 1 0 0;
-  --b2: 0.985 0.006 255;
-  --b3: 0.96 0.01 255;
-  --bc: 0.24 0.02 255;
-
-  --n: 0.28 0.02 255;
-  --nc: 1 0 0;
-
-  --in: 0.74 0.12 235;
-  --inc: 1 0 0;
-  --su: 0.76 0.16 150;
-  --suc: 1 0 0;
-  --wa: 0.86 0.17 80;
-  --wac: 0.2 0.02 80;
-  --er: 0.71 0.18 25;
-  --erc: 1 0 0;
-
-  --rounded-box: 1rem;
-  --rounded-btn: 0.8rem;
-  --rounded-badge: 9999px;
-  --animation-btn: 0.2s;
-  --animation-input: 0.2s;
-  --btn-focus-scale: 0.99;
-  --border-btn: 1px;
-  --tab-border: 1px;
-  --tab-radius: 0.8rem;
-}
-
-html[data-theme='copilot'] body {
+:root {
   background:
     radial-gradient(900px circle at 0% 0%, rgba(255, 107, 0, 0.18), transparent 45%),
     radial-gradient(900px circle at 100% 0%, rgba(255, 167, 38, 0.14), transparent 45%),
     radial-gradient(1000px circle at 50% 110%, rgba(255, 107, 0, 0.08), transparent 50%),
-    #fff7ed;
+    oklch(0.984 0.01 70);
 }
 
 @media (prefers-color-scheme: dark) {
-  html[data-theme='copilot'] {
-    --b1: 0.16 0.01 255;
-    --b2: 0.13 0.01 255;
-    --b3: 0.11 0.01 255;
-    --bc: 0.92 0.01 255;
+  :root {
+    --color-background: oklch(0.16 0.01 255);
+    --color-foreground: oklch(0.92 0.01 255);
 
-    --n: 0.22 0.01 255;
-    --nc: 0.98 0 0;
+    --color-card: oklch(0.13 0.01 255);
+    --color-card-foreground: oklch(0.92 0.01 255);
+
+    --color-popover: oklch(0.13 0.01 255);
+    --color-popover-foreground: oklch(0.92 0.01 255);
+
+    --color-secondary: oklch(0.22 0.01 255);
+    --color-secondary-foreground: oklch(0.92 0.01 255);
+
+    --color-muted: oklch(0.22 0.01 255);
+    --color-muted-foreground: oklch(0.75 0.01 255);
+
+    --color-accent: oklch(0.22 0.01 255);
+    --color-accent-foreground: oklch(0.92 0.01 255);
+
+    --color-border: oklch(0.28 0.01 255);
+    --color-input: oklch(0.28 0.01 255);
   }
 
-  html[data-theme='copilot'] body {
+  :root {
     background:
       radial-gradient(900px circle at 0% 0%, rgba(255, 107, 0, 0.16), transparent 45%),
       radial-gradient(900px circle at 100% 0%, rgba(255, 167, 38, 0.12), transparent 45%),
@@ -67,31 +74,11 @@ html[data-theme='copilot'] body {
   }
 }
 
-html[data-theme='copilot'] .btn-primary {
-  background-color: #ff6b00;
-  border-color: #ff6b00;
-  color: #fff;
+html,
+body {
+  min-height: 100%;
 }
 
-html[data-theme='copilot'] .btn-primary:hover {
-  background-color: #e85f00;
-  border-color: #e85f00;
-}
-
-html[data-theme='copilot'] .badge-primary {
-  background-color: #ff6b00;
-  border-color: #ff6b00;
-  color: #fff;
-}
-
-html[data-theme='copilot'] .text-primary {
-  color: #ff6b00;
-}
-
-html[data-theme='copilot'] .bg-primary {
-  background-color: #ff6b00;
-}
-
-html[data-theme='copilot'] .border-primary {
-  border-color: #ff6b00;
+body {
+  color: var(--color-foreground);
 }

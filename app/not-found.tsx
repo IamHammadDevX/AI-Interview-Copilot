@@ -1,12 +1,11 @@
 import ButtonSupport from '@/components/_default/ButtonSupport';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// Simple 404 page with a button to go home and a button to contact support
-// Show a cute SVG with your primary color
 export default function Custom404() {
   return (
-    <section className="relative text-base-content min-h-screen w-full flex flex-col justify-center gap-8 items-center p-10">
-      <div className="p-6 bg-base-100/80 backdrop-blur rounded-3xl border border-base-300 shadow-xl">
+    <section className="relative min-h-screen w-full flex flex-col justify-center gap-8 items-center p-10">
+      <div className="p-6 bg-card/80 backdrop-blur rounded-3xl border border-border shadow-xl">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="w-56 h-56"
@@ -100,21 +99,23 @@ export default function Custom404() {
       </p>
 
       <div className="flex flex-wrap gap-4 justify-center">
-        <Link href="/" className="btn btn-sm">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              fillRule="evenodd"
-              d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Home
-        </Link>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Home
+          </Link>
+        </Button>
 
         <ButtonSupport />
       </div>

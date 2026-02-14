@@ -1,4 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 
 export default async function Page() {
@@ -9,38 +11,38 @@ export default async function Page() {
 
   return (
     <div className="min-h-screen">
-      <div className="navbar bg-base-100/70 backdrop-blur border-b border-base-300 sticky top-0 z-50">
-        <div className="flex-1">
-          <Link className="btn btn-ghost text-xl" href="/">
+      <header className="sticky top-0 z-50 border-b border-border bg-background/70 backdrop-blur">
+        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
+          <Link className="font-semibold tracking-tight" href="/">
             AI Interview Copilot
           </Link>
-        </div>
-        <div className="flex-none gap-2">
+          <div className="flex items-center gap-2">
           {user ? (
             <>
-              <Link className="btn btn-ghost btn-sm" href="/dashboard/projects">
-                Dashboard
-              </Link>
-              <Link className="btn btn-primary btn-sm" href="/panel">
-                Open Panel
-              </Link>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/dashboard/projects">Dashboard</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/panel">Open panel</Link>
+              </Button>
             </>
           ) : (
             <>
-              <Link className="btn btn-ghost btn-sm" href="/login">
-                Login
-              </Link>
-              <Link className="btn btn-primary btn-sm" href="/signup">
-                Sign up
-              </Link>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/signup">Sign up</Link>
+              </Button>
             </>
           )}
+          </div>
         </div>
-      </div>
+      </header>
 
       <main className="px-4 py-10">
         <div className="max-w-6xl mx-auto">
-          <div className="card bg-base-100/80 backdrop-blur border border-base-300 shadow-xl overflow-hidden rounded-3xl">
+          <Card className="overflow-hidden bg-card/80 backdrop-blur">
             <div className="bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] px-6 sm:px-10 py-10">
               <div className="max-w-3xl">
                 <div className="flex items-center gap-3">
@@ -67,50 +69,50 @@ export default async function Page() {
                 <div className="mt-6 flex flex-col sm:flex-row gap-3">
                   {user ? (
                     <>
-                      <Link className="btn btn-primary" href="/dashboard/projects">
-                        Go to dashboard
-                      </Link>
-                      <Link className="btn btn-outline border-white/40 text-white hover:bg-white/10" href="/panel">
-                        Open panel
-                      </Link>
+                      <Button asChild>
+                        <Link href="/dashboard/projects">Go to dashboard</Link>
+                      </Button>
+                      <Button asChild variant="outline" className="border-white/40 text-white hover:bg-white/10">
+                        <Link href="/panel">Open panel</Link>
+                      </Button>
                     </>
                   ) : (
                     <>
-                      <Link className="btn btn-primary" href="/signup">
-                        Create account
-                      </Link>
-                      <Link className="btn btn-outline border-white/40 text-white hover:bg-white/10" href="/login">
-                        Sign in
-                      </Link>
+                      <Button asChild>
+                        <Link href="/signup">Create account</Link>
+                      </Button>
+                      <Button asChild variant="outline" className="border-white/40 text-white hover:bg-white/10">
+                        <Link href="/login">Sign in</Link>
+                      </Button>
                     </>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="px-6 sm:px-10 py-8">
+            <CardContent className="px-6 sm:px-10 py-8">
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-base-300 bg-base-100 p-5">
+                <div className="rounded-[var(--radius)] border border-border bg-card p-5">
                   <div className="font-semibold">Projects</div>
-                  <div className="text-sm opacity-70 mt-1">
+                  <div className="text-sm text-muted-foreground mt-1">
                     Keep prep organized into focused workspaces.
                   </div>
                 </div>
-                <div className="rounded-2xl border border-base-300 bg-base-100 p-5">
+                <div className="rounded-[var(--radius)] border border-border bg-card p-5">
                   <div className="font-semibold">Prompt control</div>
-                  <div className="text-sm opacity-70 mt-1">
+                  <div className="text-sm text-muted-foreground mt-1">
                     Tune the assistant voice per your workflow.
                   </div>
                 </div>
-                <div className="rounded-2xl border border-base-300 bg-base-100 p-5">
+                <div className="rounded-[var(--radius)] border border-border bg-card p-5">
                   <div className="font-semibold">Secure by default</div>
-                  <div className="text-sm opacity-70 mt-1">
+                  <div className="text-sm text-muted-foreground mt-1">
                     Auth-gated routes with per-user isolation.
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

@@ -68,7 +68,7 @@ const QuickAnswerButton = ({
           )}
         </motion.button>
         <p className="text-xs opacity-70 mt-1">
-          Press <kbd className="py-0.5 px-1 bg-base-200 border border-base-300 rounded text-xs">A</kbd>
+          Press <kbd className="py-0.5 px-1 bg-muted border border-border rounded text-xs">A</kbd>
         </p>
       </div>
     );

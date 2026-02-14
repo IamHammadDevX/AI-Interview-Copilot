@@ -44,7 +44,7 @@ const RecordButton = ({
             focus:outline-none focus:ring-2 focus:ring-offset-1 shadow-lg
             ${
               recording
-                ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:ring-error/20'
+                ? 'bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:ring-destructive/20'
                 : 'bg-gradient-to-br from-[#FF6B00] to-[#FFA63D] hover:from-[#E85F00] hover:to-[#FF8A2A] focus:ring-primary/20'
             }
           `}
@@ -72,7 +72,7 @@ const RecordButton = ({
           </div>
         </motion.button>
         <p className="text-xs opacity-70 mt-1">
-          Press <kbd className="px-1 py-0.5 bg-base-200 border border-base-300 rounded text-xs">S</kbd>
+          Press <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-xs">S</kbd>
         </p>
       </div>
     );
@@ -90,7 +90,7 @@ const RecordButton = ({
                 focus:outline-none focus:ring-4 focus:ring-offset-2
                 ${
                   recording
-                    ? 'bg-red-500 hover:bg-red-600 focus:ring-error/20 shadow-lg shadow-red-200/30'
+                    ? 'bg-red-500 hover:bg-red-600 focus:ring-destructive/20 shadow-lg shadow-red-200/30'
                     : 'bg-[#FF6B00] hover:bg-[#E85F00] focus:ring-primary/20 shadow-lg shadow-primary/20'
                 }
               `}
@@ -135,7 +135,7 @@ const RecordButton = ({
                 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-1
                 ${
                   recording
-                    ? 'bg-red-500 hover:bg-red-600 focus:ring-error/20'
+                    ? 'bg-red-500 hover:bg-red-600 focus:ring-destructive/20'
                     : 'bg-[#FF6B00] hover:bg-[#E85F00] focus:ring-primary/20'
                 }
               `}
@@ -175,7 +175,7 @@ const RecordButton = ({
           {recording ? 'Click to stop recording' : 'Click to start recording'}
         </p>
         <p className="text-xs opacity-70 mt-1">
-          Use <kbd className="px-1.5 py-0.5 bg-base-200 border border-base-300 rounded text-xs">S</kbd>{' '}
+          Use <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-xs">S</kbd>{' '}
           for quick access
         </p>
         {useWebAPI && (

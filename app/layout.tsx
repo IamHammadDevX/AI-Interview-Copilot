@@ -15,8 +15,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="copilot" className={font.className}>
-      <body>
+    <html lang="en" className={font.className}>
+      <body className="min-h-screen bg-background text-foreground">
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

@@ -51,7 +51,7 @@ const ClearContextButton = ({
           onClick={onClick}
           disabled={disabled}
           className="cursor-pointer flex items-center justify-center w-8 h-8
-      bg-base-200/40 text-base-content rounded-xl font-medium transition-all duration-200 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-error/10"
+      bg-muted/40 text-foreground rounded-xl font-medium transition-all duration-200 hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-ring/30"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           aria-label="Clear recording (D)"
@@ -64,7 +64,7 @@ const ClearContextButton = ({
           )}
         </motion.button>
         <p className="text-xs opacity-70 mt-1">
-          Press <kbd className="px-1 py-0.5 bg-base-200 border border-base-300 rounded text-xs">D</kbd>
+          Press <kbd className="px-1 py-0.5 bg-muted border border-border rounded text-xs">D</kbd>
         </p>
       </div>
     );
@@ -74,7 +74,7 @@ const ClearContextButton = ({
     <motion.button
       onClick={handleClick}
       disabled={isSending || disabled}
-      className="flex cursor-pointer lg:flex-1 items-center justify-center gap-3 w-10 h-10 lg:w-fit lg:h-fit p-1 lg:p-4 bg-base-200/40 text-base-content rounded-2xl font-medium transition-all duration-200 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-error/10"
+      className="flex cursor-pointer lg:flex-1 items-center justify-center gap-3 w-10 h-10 lg:w-fit lg:h-fit p-1 lg:p-4 bg-muted/40 text-foreground rounded-2xl font-medium transition-all duration-200 hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-ring/30"
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       aria-label="Clear recording (D)"
@@ -88,7 +88,7 @@ const ClearContextButton = ({
       <span className="hidden lg:block font-semibold">
         {isSending ? 'Clearing...' : 'Clear'}
       </span>
-      <kbd className="hidden lg:block px-2 py-1 bg-base-200 border border-base-300 rounded text-xs">
+      <kbd className="hidden lg:block px-2 py-1 bg-muted border border-border rounded text-xs">
         D
       </kbd>
     </motion.button>

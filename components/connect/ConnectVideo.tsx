@@ -1,10 +1,19 @@
 'use client';
-import { useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 const ConnectVideo = () => {
-  const connectVideoModal = useRef<HTMLDialogElement>(null);
   const router = useRouter();
+  const [open, setOpen] = useState(false);
 
   const handleJoinMeet = () => {
     window.open(
@@ -17,7 +26,7 @@ const ConnectVideo = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center border-b border-base-300 space-y-6 px-6">
+    <div className="flex-1 flex flex-col items-center justify-center border-b border-border space-y-6 px-6">
       <div className="text-center space-y-4">
         <h1 className="text-3xl font-extrabold">Connect Video ⚡️</h1>
         <p className="text-lg opacity-80">
@@ -25,39 +34,36 @@ const ConnectVideo = () => {
         </p>
       </div>
 
-      <button
-        className="btn"
-        onClick={() => connectVideoModal.current?.showModal()}
-      >
-        Open Modal
-      </button>
-      <button className="btn btn-primary" onClick={handleJoinMeet}>
-        Join Meet with Copilot
-      </button>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button variant="outline" onClick={() => setOpen(true)}>
+          Open details
+        </Button>
+        <Button onClick={handleJoinMeet}>Join Meet with Copilot</Button>
+      </div>
 
-      {/* Modal */}
-      <dialog ref={connectVideoModal} className="modal">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg">Connect to Google Meet</h3>
-          <p className="py-4">
-            This will open Google Meet and your Copilot assistant.
-          </p>
-          <div className="modal-action">
-            <button
-              className="btn"
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Connect to Google Meet</DialogTitle>
+            <DialogDescription>
+              This opens Google Meet in a new tab and then takes you to the panel.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button
               onClick={() => {
-                connectVideoModal.current?.close();
-                handleJoinMeet();  
+                setOpen(false);
+                handleJoinMeet();
               }}
             >
               Join
-            </button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>Close</button>
-        </form>
-      </dialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -37,7 +37,6 @@ export async function middleware(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = req.nextUrl.pathname;
-  const isAuthRoute = pathname === "/login" || pathname === "/signup";
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isPanelRoute = pathname.startsWith("/panel");
 
@@ -51,18 +50,9 @@ export async function middleware(req: NextRequest) {
     return redirectResponse;
   }
 
-  if (isAuthRoute && user) {
-    const redirectUrl = req.nextUrl.clone();
-    redirectUrl.pathname = "/dashboard/projects";
-
-    const redirectResponse = NextResponse.redirect(redirectUrl);
-    response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie));
-    return redirectResponse;
-  }
-
   return response;
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/panel/:path*", "/login", "/signup"],
+  matcher: ["/dashboard/:path*", "/panel/:path*"],
 };

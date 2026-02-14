@@ -1,93 +1,84 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createProjectAction } from "../actions";
-import { useRef } from "react";
 
 type ActionState = { error: string } | null;
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button className="btn btn-primary w-full" type="submit" disabled={pending}>
+    <Button className="w-full" type="submit" disabled={pending}>
       {pending ? "Creating..." : "Create"}
-    </button>
+    </Button>
   );
 }
 
 export default function CreateProjectForm() {
-  const modalRef = useRef<HTMLDialogElement | null>(null);
+  const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState<ActionState, FormData>(
     createProjectAction,
     null
   );
 
   return (
-    <>
-      <button
-        className="btn btn-outline"
-        onClick={() => modalRef.current?.showModal()}
-        type="button"
-      >
-        New project
-      </button>
-
-      <dialog ref={modalRef} className="modal">
-        <div className="modal-box w-11/12 max-w-lg rounded-2xl border border-base-300">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold">Create project</h2>
-              <p className="text-sm opacity-70">
-                Set up a workspace to group documents and context.
-              </p>
-            </div>
-            <form method="dialog">
-              <button className="btn btn-ghost btn-sm" aria-label="Close">
-                ✕
-              </button>
-            </form>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" type="button">
+          New project
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Create project</DialogTitle>
+          <DialogDescription>
+            Set up a workspace to group documents and context.
+          </DialogDescription>
+        </DialogHeader>
+        <form action={formAction} className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="project-name">Name</Label>
+            <Input
+              id="project-name"
+              name="name"
+              placeholder="My Interview Prep"
+              required
+            />
           </div>
 
-          <form action={formAction} className="grid gap-3 mt-4">
-            <label className="form-control">
-              <div className="label">
-                <span className="label-text">Name</span>
-              </div>
-              <input
-                name="name"
-                className="input input-bordered w-full"
-                placeholder="My Interview Prep"
-                required
-              />
-            </label>
+          <div className="grid gap-2">
+            <Label htmlFor="project-description">Description</Label>
+            <Textarea
+              id="project-description"
+              name="description"
+              placeholder="Optional"
+              rows={4}
+            />
+          </div>
 
-            <label className="form-control">
-              <div className="label">
-                <span className="label-text">Description</span>
-              </div>
-              <textarea
-                name="description"
-                className="textarea textarea-bordered w-full"
-                placeholder="Optional"
-                rows={4}
-              />
-            </label>
+          {state?.error && (
+            <Alert className="border-destructive/30">
+              <AlertDescription>{state.error}</AlertDescription>
+            </Alert>
+          )}
 
-            {state?.error && (
-              <div className="alert alert-error">
-                <span>{state.error}</span>
-              </div>
-            )}
-
-            <div className="pt-1">
-              <SubmitButton />
-            </div>
-          </form>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
+          <SubmitButton />
         </form>
-      </dialog>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }

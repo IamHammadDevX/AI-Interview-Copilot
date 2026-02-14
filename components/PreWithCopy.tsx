@@ -41,16 +41,16 @@ export default function PreWithCopy({
         onClick={handleCopy}
         aria-label="Copy code"
         className="cursor-pointer
-          absolute top-2 right-2 z-10 rounded-md bg-base-100/80 p-1 shadow
+          absolute top-2 right-2 z-10 rounded-md bg-background/80 p-1 shadow
           backdrop-blur-sm transition
           opacity-0 group-hover:opacity-100
           hover:scale-105 active:scale-95
         "
       >
         {copied ? (
-          <span className="text-xs font-semibold text-success m-2">✓</span>
+          <span className="text-xs font-semibold text-primary m-2">✓</span>
         ) : (
-          <Copy className="w-4 h-4 text-base-content" />
+          <Copy className="w-4 h-4 text-foreground" />
         )}
       </button>
       {children}

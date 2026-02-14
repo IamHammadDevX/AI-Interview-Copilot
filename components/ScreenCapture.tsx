@@ -75,7 +75,7 @@ const ScreenCapture = ({
     useGlobalShortcut('KeyX', takeScreenshot, capturing && !loading);
 
     return (
-      <div className="relative w-full h-full flex items-center justify-center bg-base-100/70 backdrop-blur rounded-3xl border border-base-300 overflow-hidden">
+      <div className="relative w-full h-full flex items-center justify-center bg-card/70 backdrop-blur rounded-3xl border border-border overflow-hidden">
         <video
           ref={videoRef}
           className={`w-full h-full object-contain rounded-xl transition-opacity duration-300 ${
@@ -99,7 +99,7 @@ const ScreenCapture = ({
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-base-content">
+              <h3 className="text-lg font-semibold text-foreground">
                 {loading ? 'Connecting...' : 'Ready to Capture'}
               </h3>
               <p className="opacity-70 max-w-md text-sm leading-relaxed">
@@ -154,11 +154,11 @@ const ScreenCapture = ({
               </button>
 
               {!autoMode && (
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-base-100/95 backdrop-blur text-base-content text-xs rounded-2xl border border-base-300 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-normal break-words max-w-52 w-full z-10">
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-2 bg-popover/95 backdrop-blur text-popover-foreground text-xs rounded-2xl border border-border shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-normal break-words max-w-52 w-full z-10">
                   Enable automatic screenshots every minute. So if your coding
                   task has focus detection, you can always keep it on the needed
                   screen
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-base-100"></div>
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-popover"></div>
                 </div>
               )}
             </div>

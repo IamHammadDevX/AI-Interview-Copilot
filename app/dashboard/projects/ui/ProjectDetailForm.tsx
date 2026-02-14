@@ -1,5 +1,22 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
 import { deleteProjectAction, updateProjectAction } from "../actions";
@@ -16,18 +33,9 @@ type ActionState = { error: string } | null;
 function SaveButton() {
   const { pending } = useFormStatus();
   return (
-    <button className="btn btn-primary" type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending}>
       {pending ? "Saving..." : "Save"}
-    </button>
-  );
-}
-
-function DeleteButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button className="btn btn-outline btn-error" type="submit" disabled={pending}>
-      {pending ? "Deleting..." : "Delete"}
-    </button>
+    </Button>
   );
 }
 
@@ -39,76 +47,95 @@ export default function ProjectDetailForm({ project }: { project: Project }) {
 
   return (
     <div className="space-y-4">
-      <div className="card bg-base-100/80 backdrop-blur shadow-xl border border-base-300 overflow-hidden rounded-3xl">
+      <Card className="overflow-hidden bg-card/80 backdrop-blur">
         <div className="bg-gradient-to-r from-[#FF6B00] to-[#FFA63D] px-6 py-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-white font-semibold text-lg">Project settings</h2>
               <div className="text-white/90 text-sm">Update name and description</div>
             </div>
-            <Link className="btn btn-outline border-white/40 text-white hover:bg-white/10" href="/dashboard/projects">
-              Back
-            </Link>
+            <Button asChild variant="outline" className="border-white/40 text-white hover:bg-white/10">
+              <Link href="/dashboard/projects">Back</Link>
+            </Button>
           </div>
         </div>
 
-        <div className="card-body">
+        <CardContent className="p-6">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-base font-semibold">Details</h3>
           </div>
 
-          <form action={formAction} className="grid gap-3">
-            <label className="form-control">
-              <div className="label">
-                <span className="label-text">Name</span>
-              </div>
-              <input
-                name="name"
-                className="input input-bordered w-full"
-                defaultValue={project.name}
-                required
-              />
-            </label>
+          <form action={formAction} className="grid gap-4 mt-3">
+            <div className="grid gap-2">
+              <Label htmlFor="project-name">Name</Label>
+              <Input id="project-name" name="name" defaultValue={project.name} required />
+            </div>
 
-            <label className="form-control">
-              <div className="label">
-                <span className="label-text">Description</span>
-              </div>
-              <textarea
+            <div className="grid gap-2">
+              <Label htmlFor="project-description">Description</Label>
+              <Textarea
+                id="project-description"
                 name="description"
-                className="textarea textarea-bordered w-full"
                 rows={4}
                 defaultValue={project.description ?? ""}
               />
-            </label>
+            </div>
 
             {state?.error && (
-              <div className="alert alert-error">
-                <span>{state.error}</span>
-              </div>
+              <Alert className="border-destructive/30">
+                <AlertDescription>{state.error}</AlertDescription>
+              </Alert>
             )}
 
-            <div className="flex items-center justify-between">
-              <div className="text-xs opacity-60">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs text-muted-foreground">
                 Created {new Date(project.created_at).toLocaleString()}
               </div>
               <SaveButton />
             </div>
           </form>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="card bg-base-100/80 backdrop-blur shadow-xl border border-base-300 rounded-3xl">
-        <div className="card-body">
-          <h2 className="card-title text-error">Danger zone</h2>
-          <div className="text-sm opacity-70">
-            Deleting a project is permanent.
+      <Card className="bg-card/80 backdrop-blur">
+        <CardContent className="p-6 space-y-3">
+          <div>
+            <div className="text-base font-semibold text-destructive">Danger zone</div>
+            <div className="text-sm text-muted-foreground mt-1">
+              Deleting a project is permanent.
+            </div>
           </div>
-          <form action={boundDelete}>
-            <DeleteButton />
-          </form>
-        </div>
-      </div>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">Delete project</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this project?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <form action={boundDelete}>
+                  <PendingDeleteAction />
+                </form>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
     </div>
+  );
+}
+
+function PendingDeleteAction() {
+  const { pending } = useFormStatus();
+  return (
+    <AlertDialogAction type="submit" disabled={pending}>
+      {pending ? "Deleting..." : "Delete"}
+    </AlertDialogAction>
   );
 }

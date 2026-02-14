@@ -1,10 +1,9 @@
 'use client';
 
 import ButtonSupport from '@/components/_default/ButtonSupport';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// A simple error boundary to show a nice error page if something goes wrong (Error Boundary)
-// Users can contanct support, go to the main page or try to reset/refresh to fix the error
 export default function Error({
   error,
   reset,
@@ -13,9 +12,8 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <>
-      <div className="min-h-screen w-full flex flex-col justify-center items-center text-center gap-6 p-6">
-        <div className="p-6 bg-base-100/80 backdrop-blur rounded-3xl border border-base-300 shadow-xl">
+    <div className="min-h-screen w-full flex flex-col justify-center items-center text-center gap-6 p-6">
+      <div className="p-6 bg-card/80 backdrop-blur rounded-3xl border border-border shadow-xl">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             data-name="Layer 1"
@@ -128,16 +126,16 @@ export default function Error({
               d="M417.523 130.291h-72a6.508 6.508 0 0 1-6.5-6.5v-87.5a6.508 6.508 0 0 1 6.5-6.5h72a6.508 6.508 0 0 1 6.5 6.5v87.5a6.508 6.508 0 0 1-6.5 6.5Z"
             />
           </svg>
-        </div>
+      </div>
 
         <p className="font-medium md:text-xl md:font-semibold">
           Something went wrong 🥲
         </p>
 
-        <p className="text-error">{error?.message}</p>
+      <p className="text-destructive">{error?.message}</p>
 
-        <div className="flex flex-wrap gap-4 justify-center">
-          <button className="btn btn-sm" onClick={reset}>
+      <div className="flex flex-wrap gap-4 justify-center">
+        <Button variant="outline" size="sm" onClick={reset}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
@@ -151,9 +149,10 @@ export default function Error({
               />
             </svg>
             Refresh
-          </button>
-          <ButtonSupport />
-          <Link href="/" className="btn btn-sm">
+        </Button>
+        <ButtonSupport />
+        <Button asChild variant="outline" size="sm">
+          <Link href="/">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
@@ -168,8 +167,8 @@ export default function Error({
             </svg>
             Home
           </Link>
-        </div>
+        </Button>
       </div>
-    </>
+    </div>
   );
 }

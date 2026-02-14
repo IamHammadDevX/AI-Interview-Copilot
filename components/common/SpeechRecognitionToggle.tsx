@@ -35,14 +35,14 @@ const Tooltip = ({
           transition={{ duration: 0.2, ease: 'easeOut' }}
           className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50"
         >
-          <div className="bg-base-100/95 backdrop-blur text-base-content p-3 rounded-2xl shadow-xl border border-base-300 min-w-64 max-w-xs">
+          <div className="bg-popover/95 backdrop-blur text-popover-foreground p-3 rounded-2xl shadow-xl border border-border min-w-64 max-w-xs">
             <div className="font-semibold text-sm mb-1">{content}</div>
             <div className="text-xs opacity-70 leading-relaxed">
               {description}
             </div>
             {/* Arrow */}
             <div className="absolute top-full left-1/2 transform -translate-x-1/2">
-              <div className="border-4 border-transparent border-t-base-100"></div>
+              <div className="border-4 border-transparent border-t-popover"></div>
             </div>
           </div>
         </motion.div>
@@ -69,7 +69,7 @@ const SpeechRecognitionToggle = ({
 
   if (isCompact) {
     return (
-      <div className="flex items-center gap-2 p-2 bg-base-100/70 backdrop-blur rounded-2xl border border-base-300 shadow-sm">
+      <div className="flex items-center gap-2 p-2 bg-card/70 backdrop-blur rounded-2xl border border-border shadow-sm">
         <div
           className={`text-xs ${
             !useWebAPI ? 'text-primary font-medium' : 'opacity-50'
@@ -83,14 +83,14 @@ const SpeechRecognitionToggle = ({
           disabled={disabled}
           className={`
             relative w-8 h-4 rounded-full transition-colors duration-300 focus:outline-none
-            ${useWebAPI ? 'bg-primary' : 'bg-base-300'}
+            ${useWebAPI ? 'bg-primary' : 'bg-muted'}
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           `}
           whileTap={!disabled ? { scale: 0.95 } : {}}
           title={`Switch to ${useWebAPI ? 'Whisper' : 'Web API'}`}
         >
           <motion.div
-            className="absolute top-0.5 w-3 h-3 bg-base-100 rounded-full shadow-sm"
+            className="absolute top-0.5 w-3 h-3 bg-background rounded-full shadow-sm"
             animate={{ x: useWebAPI ? 16 : 2 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           />
@@ -108,7 +108,7 @@ const SpeechRecognitionToggle = ({
   }
 
   return (
-    <div className="flex w-full items-center justify-center gap-4 p-3 bg-base-200/40 rounded-2xl border border-base-300">
+    <div className="flex w-full items-center justify-center gap-4 p-3 bg-muted/40 rounded-2xl border border-border">
       <Tooltip
         content="Whisper API"
         description="AI-powered speech recognition with Whisper. Auto language detection. Backend processing for high accuracy (slightly slower). Requires API key."
@@ -127,7 +127,7 @@ const SpeechRecognitionToggle = ({
         disabled={disabled}
         className={`
           relative w-14 h-7 rounded-full transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-primary/15
-          ${useWebAPI ? 'bg-primary' : 'bg-base-300'}
+          ${useWebAPI ? 'bg-primary' : 'bg-muted'}
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
         whileTap={!disabled ? { scale: 0.95 } : {}}
@@ -139,7 +139,7 @@ const SpeechRecognitionToggle = ({
         } recognition`}
       >
         <motion.div
-          className="absolute top-0.5 w-6 h-6 bg-base-100 rounded-full shadow-md"
+          className="absolute top-0.5 w-6 h-6 bg-background rounded-full shadow-md"
           animate={{
             x: useWebAPI ? 28 : 2,
           }}
