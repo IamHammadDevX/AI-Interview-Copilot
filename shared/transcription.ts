@@ -9,6 +9,7 @@ export type ProxyTranscriptMsg = {
   type: "transcript";
   text: string;
   isFinal: boolean;
+  speechFinal: boolean;
   speaker: "interviewer" | "other";
   ts: number;
 };

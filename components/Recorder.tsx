@@ -6,7 +6,7 @@ import InterimTranscript from '@/components/InterimTranscript'
 import { useInterviewerProxyTranscription } from '@/hooks/useInterviewerProxyTranscription'
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import useVoiceRecorderWebAPI from '@/hooks/useWebSpeechRecorder';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ClearContextButton from './button/ClearContextButton';
 import QuickAnswerButton from './button/QuickAnswerButton';
 import RecordButton from './button/RecordButton';
@@ -44,6 +44,14 @@ export default function Recorder({
     },
     systemStream: audioSources?.system ?? null,
   })
+
+  // Cache last final sentence in a ref so hotkey always reads latest
+  const lastFinalRef = useRef("")
+  useEffect(() => {
+    if (interview.lastFinalSentence) {
+      lastFinalRef.current = interview.lastFinalSentence
+    }
+  }, [interview.lastFinalSentence])
 
   const [elapsed, setElapsed] = useState(0)
   const formattedElapsed = useMemo(
@@ -105,10 +113,11 @@ export default function Recorder({
     clearContext();
   };
 
-  const handleInterviewAnswer = async () => {
-    const q = interview.interimText.trim()
+  const handleInterviewAnswer = useCallback(() => {
+    // Use the cached last finalized interviewer sentence
+    const q = lastFinalRef.current.trim()
     if (!q) {
-      ErrorToast('No interviewer text yet.')
+      ErrorToast('No finalized interviewer sentence yet.')
       return
     }
     if (interview.isSpeechActive) {
@@ -116,7 +125,29 @@ export default function Recorder({
       return
     }
     onAddUserTurn(q)
-  }
+  }, [interview.isSpeechActive, onAddUserTurn])
+
+  // Hotkey "A" → trigger AI with last finalized interviewer sentence
+  // Only fires when not focused on input/textarea
+  useEffect(() => {
+    if (!hasProject) return
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when user is typing in an input field
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable) return
+
+      // Only plain "A" key (no modifiers)
+      if (e.key.toLowerCase() !== 'a') return
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return
+
+      e.preventDefault()
+      handleInterviewAnswer()
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [hasProject, handleInterviewAnswer])
 
   if (hasProject) {
     return (
@@ -152,18 +183,22 @@ export default function Recorder({
               <QuickAnswerButton
                 isCompact
                 onClick={handleInterviewAnswer}
-                disabled={interview.status !== 'streaming' || interview.isSpeechActive || !interview.interimText.trim()}
+                disabled={interview.status !== 'streaming' || interview.isSpeechActive || !lastFinalRef.current.trim()}
               />
               <ClearContextButton
                 isCompact
-                onClick={interview.reset}
+                onClick={interview.clearTranscript}
                 disabled={false}
               />
             </div>
           </div>
 
           <div className="flex-1 min-w-0">
-            <InterimTranscript text={interview.interimText} streaming={interview.status === 'streaming'} />
+            <InterimTranscript
+              finalizedLines={interview.finalizedLines}
+              interimText={interview.interimText}
+              streaming={interview.status === 'streaming'}
+            />
           </div>
         </div>
       </div>

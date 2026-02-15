@@ -44,7 +44,7 @@ const ScreenCapture = ({
       onExternalStopHandled,
       handleScreenshot,
   }: Props) => {
-    const { videoRef, capturing, loading, startCapture, stopCapture } =
+    const { videoRef, capturing, loading, audioMissing, startCapture, stopCapture } =
       useScreenCapture(onStreamAvailable, onSourcesAvailable);
   
     const { takeScreenshot } = useScreenshot(
@@ -131,6 +131,14 @@ const ScreenCapture = ({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {capturing && audioMissing && (
+          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 max-w-xs">
+            <div className="bg-destructive/90 text-destructive-foreground text-xs font-medium px-3 py-2 rounded-xl shadow-lg text-center">
+              ⚠ No tab audio detected. Stop capture, re-share, and check &quot;Share tab audio&quot;.
+            </div>
           </div>
         )}
 

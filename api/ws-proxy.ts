@@ -80,7 +80,7 @@ function buildDeepgramUrl(): string {
     sample_rate: "16000",
     channels: "1",
     interim_results: "true",
-    endpointing: "50",
+    endpointing: "300",
   });
   return `wss://api.deepgram.com/v1/listen?${q.toString()}`;
 }
@@ -148,6 +148,7 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ server, path: "/ws/transcribe" });
 
 wss.on("connection", (client) => {
+  console.log("[proxy] Browser client connected");
   let stopped = false;
   let dg: WebSocket | null = null;
   let dgConnecting = false;
@@ -175,6 +176,7 @@ wss.on("connection", (client) => {
     sock.binaryType = "arraybuffer";
 
     sock.on("open", () => {
+      console.log("[proxy] Deepgram connection OPEN");
       dgConnecting = false;
       dgAttempts = 0;
       dg = sock;
@@ -190,8 +192,9 @@ wss.on("connection", (client) => {
       }
     });
 
-    sock.on("message", (data) => {
-      if (typeof data !== "string") return;
+    sock.on("message", (rawData, isBinary) => {
+      if (isBinary) return;
+      const data = rawData.toString();
       let msg: DeepgramMessage | null = null;
       try {
         msg = JSON.parse(data) as DeepgramMessage;
@@ -207,20 +210,25 @@ wss.on("connection", (client) => {
       const out: ProxyTranscriptMsg = {
         type: "transcript",
         text: transcript,
-        isFinal: Boolean(msg.is_final || msg.speech_final),
+        isFinal: Boolean(msg.is_final),
+        speechFinal: Boolean(msg.speech_final),
         speaker,
         ts: Date.now(),
       };
+      console.log(
+        `[proxy] ▸ ${out.speaker} | final=${out.isFinal} speechFinal=${out.speechFinal} | "${out.text.slice(0, 60)}"`
+      );
       sendJson(client, out);
     });
 
-    sock.on("close", (ev) => {
+    sock.on("close", (code, reason) => {
+      console.log(`[proxy] Deepgram closed: code=${code} reason=${reason?.toString() ?? ""}`);
       dgConnecting = false;
       dg = null;
       if (stopped) return;
-      const reason = normalizeCloseReason((ev as any).reason ?? "");
-      if (isAuthFailure((ev as any).code ?? 0, reason)) {
-        sendJson(client, status("error", `Deepgram auth rejected: ${reason || "unauthorized"}`));
+      const reasonStr = normalizeCloseReason(reason?.toString() ?? "");
+      if (isAuthFailure(code ?? 0, reasonStr)) {
+        sendJson(client, status("error", `Deepgram auth rejected: ${reasonStr || "unauthorized"}`));
         try {
           client.close();
         } catch {
@@ -247,7 +255,8 @@ wss.on("connection", (client) => {
       }, delay);
     });
 
-    sock.on("error", () => {
+    sock.on("error", (err) => {
+      console.error("[proxy] Deepgram socket error:", err?.message ?? err);
       dgConnecting = false;
       if (stopped) return;
       sendJson(client, status("error", "Deepgram socket error"));
@@ -257,12 +266,14 @@ wss.on("connection", (client) => {
   sendJson(client, status("connected"));
   connectDeepgram();
 
-  client.on("message", (data) => {
+  let audioFrames = 0;
+  client.on("message", (rawData, isBinary) => {
     if (stopped) return;
-    if (typeof data === "string") {
+    if (!isBinary) {
+      const text = rawData.toString();
       let msg: ProxyControlMsg | null = null;
       try {
-        msg = JSON.parse(data) as ProxyControlMsg;
+        msg = JSON.parse(text) as ProxyControlMsg;
       } catch {
         return;
       }
@@ -283,8 +294,11 @@ wss.on("connection", (client) => {
       return;
     }
 
-    const buf = Buffer.from(data as any);
+    const buf = Buffer.from(rawData as any);
     if (!buf.length) return;
+    audioFrames++;
+    if (audioFrames === 1) console.log("[proxy] First audio frame received from browser");
+    if (audioFrames % 500 === 0) console.log(`[proxy] Audio frames: ${audioFrames} (~${Math.round(audioFrames * 20 / 1000)}s)`);
     if (dg && dg.readyState === WebSocket.OPEN) {
       try {
         dg.send(buf);
@@ -298,6 +312,7 @@ wss.on("connection", (client) => {
   });
 
   client.on("close", () => {
+    console.log("[proxy] Browser client disconnected");
     stopped = true;
     try {
       dg?.close();
@@ -312,6 +327,28 @@ let port = Number(process.env.DG_PROXY_PORT ?? 3035);
 const maxPort = port + 10;
 let listening = false;
 let retryScheduled = false;
+
+const killPortAndListen = async () => {
+  // On Windows, try to kill any process holding the port
+  try {
+    const { execSync } = await import("node:child_process");
+    const out = execSync(
+      `powershell -Command "(Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue).OwningProcess"`,
+      { encoding: "utf8", timeout: 3000 }
+    ).trim();
+    const pids = [...new Set(out.split(/\r?\n/).map(s => s.trim()).filter(Boolean))];
+    for (const pid of pids) {
+      if (pid && pid !== String(process.pid)) {
+        try { execSync(`taskkill /F /PID ${pid}`, { timeout: 2000 }); } catch { void 0; }
+        console.log(`[proxy] Killed stale PID ${pid} on port ${port}`);
+      }
+    }
+    if (pids.length) await new Promise(r => setTimeout(r, 300));
+  } catch {
+    void 0;
+  }
+  listen();
+};
 
 const listen = () => {
   retryScheduled = false;
@@ -337,4 +374,4 @@ const handleListenError = (err: any) => {
 server.on("error", handleListenError);
 wss.on("error", handleListenError);
 
-listen();
+killPortAndListen();

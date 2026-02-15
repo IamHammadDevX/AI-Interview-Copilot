@@ -20,18 +20,27 @@ export const useScreenCapture = (
   const [capturing, setCapturing] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [audioMissing, setAudioMissing] = useState(false);
+
   const startCapture = useCallback(async () => {
     setLoading(true);
+    setAudioMissing(false);
     try {
       const meet = await navigator.mediaDevices.getDisplayMedia({
         video: true,
         audio: true,
       });
 
-      const systemAudio = new MediaStream(meet.getAudioTracks());
+      const audioTracks = meet.getAudioTracks();
+      if (audioTracks.length === 0) {
+        // User shared screen but did NOT check "Share tab audio"
+        setAudioMissing(true);
+      }
+
+      const systemAudio = new MediaStream(audioTracks);
       const preview = new MediaStream([
         ...meet.getVideoTracks(),
-        ...systemAudio.getAudioTracks(),
+        ...audioTracks,
       ]);
 
       if (videoRef.current) {
@@ -63,6 +72,7 @@ export const useScreenCapture = (
     onStreamAvailable(null);
     onSourcesAvailable?.(null);
     setCapturing(false);
+    setAudioMissing(false);
   }, [onSourcesAvailable, onStreamAvailable]);
 
   // Handle stream end events
@@ -85,6 +95,7 @@ export const useScreenCapture = (
     videoRef,
     capturing,
     loading,
+    audioMissing,
     startCapture,
     stopCapture,
   };

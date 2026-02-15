@@ -3,22 +3,16 @@ import type { ProxyServerMsg, ProxyStatusMsg, ProxyTranscriptMsg } from "../shar
 
 type StatusState = ProxyStatusMsg["state"];
 
+export type FinalizedLine = {
+  text: string;
+  ts: number;
+};
+
 function buildProxyWsUrl(port: number) {
   if (typeof window === "undefined") return "";
   const proto = window.location.protocol === "https:" ? "wss" : "ws";
   const host = window.location.hostname;
   return `${proto}://${host}:${port}/ws/transcribe`;
-}
-
-function dedupeReplace(prev: string, next: string): string {
-  const a = prev.trim();
-  const b = next.trim();
-  if (!b) return a;
-  if (!a) return b;
-  if (a === b) return a;
-  if (b.startsWith(a)) return b;
-  if (a.startsWith(b)) return a;
-  return b;
 }
 
 function createWorkletUrl() {
@@ -96,6 +90,9 @@ registerProcessor('system-pcm-worklet', SystemPcmWorklet);
   return URL.createObjectURL(new Blob([workletCode], { type: "text/javascript" }));
 }
 
+/** Max finalized lines to keep in memory */
+const MAX_LINES = 300;
+
 export function useInterviewerProxyTranscription({
   onSpeechActiveChange,
   systemStream,
@@ -105,7 +102,12 @@ export function useInterviewerProxyTranscription({
 } = {}) {
   const [status, setStatus] = useState<StatusState>("closed");
   const [error, setError] = useState<string | null>(null);
+
+  // --- Transcript state ---
+  const [finalizedLines, setFinalizedLines] = useState<FinalizedLine[]>([]);
   const [interimText, setInterimText] = useState("");
+  const lastFinalSentenceRef = useRef("");
+
   const [isSpeechActive, setIsSpeechActive] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -247,9 +249,28 @@ export function useInterviewerProxyTranscription({
       }
 
       const t = msg as ProxyTranscriptMsg;
+
+      // Only show interviewer lines — ignore mic/local speaker
       if (t.speaker !== "interviewer") return;
-      if (t.isFinal) return;
-      setInterimText((prev) => dedupeReplace(prev, t.text));
+
+      const text = (t.text || "").trim();
+      if (!text) return;
+
+      if (t.speechFinal) {
+        // End of utterance — finalize this line, clear interim
+        setFinalizedLines((prev) => {
+          // Dedupe: don't add if identical to last line
+          const last = prev[prev.length - 1];
+          if (last && last.text === text) return prev;
+          const next = [...prev, { text, ts: t.ts }];
+          return next.length > MAX_LINES ? next.slice(-MAX_LINES) : next;
+        });
+        setInterimText("");
+        lastFinalSentenceRef.current = text;
+      } else {
+        // Interim or is_final-but-not-speech_final — update current line in place
+        setInterimText(text);
+      }
     };
   }, [envProxyUrl]);
 
@@ -258,67 +279,58 @@ export function useInterviewerProxyTranscription({
     setError(null);
     setInterimText("");
 
-    connectProxy();
-
-    let stream: MediaStream | null = null;
-    if (systemStream && systemStream.getAudioTracks().length) {
-      stream = systemStream;
-    } else {
-      try {
-        stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: false });
-      } catch {
-        stream = await navigator.mediaDevices.getDisplayMedia({
-          audio: true,
-          video: { frameRate: 1, width: 16, height: 16 },
-        });
-        stream.getVideoTracks().forEach((t) => t.stop());
-      }
-    }
-
-    const audioTracks = stream.getAudioTracks();
-    if (!audioTracks.length) {
-      stream.getTracks().forEach((t) => t.stop());
+    // Require system audio from ScreenCapture — never request getDisplayMedia here
+    if (!systemStream || systemStream.getAudioTracks().length === 0) {
       setStatus("error");
-      setError("No system audio track. Enable tab/system audio sharing.");
+      setError(
+        "No system audio. Click \"Start Capture\" first and make sure \"Share tab audio\" is checked."
+      );
       return;
     }
 
-    streamRef.current = new MediaStream(audioTracks);
+    connectProxy();
 
-    const ctx = new AudioContext();
-    ctxRef.current = ctx;
+    try {
+      streamRef.current = new MediaStream(systemStream.getAudioTracks());
 
-    const workletUrl = createWorkletUrl();
-    workletUrlRef.current = workletUrl;
-    await ctx.audioWorklet.addModule(workletUrl);
+      const ctx = new AudioContext();
+      ctxRef.current = ctx;
 
-    const source = ctx.createMediaStreamSource(streamRef.current);
-    const node = new AudioWorkletNode(ctx, "system-pcm-worklet");
-    nodeRef.current = node;
+      const workletUrl = createWorkletUrl();
+      workletUrlRef.current = workletUrl;
+      await ctx.audioWorklet.addModule(workletUrl);
 
-    node.port.onmessage = (e) => {
-      const data = e.data as any;
-      if (!data) return;
-      if (data.type === "energy" && typeof data.rms === "number") {
-        lastRmsRef.current = data.rms;
-        const now = Date.now();
-        if (data.rms > 0.02) lastSpeechMsRef.current = now;
-        return;
-      }
-      if (data.type === "chunk" && data.buf) {
-        const ws = wsRef.current;
-        if (!ws || ws.readyState !== WebSocket.OPEN) return;
-        try {
-          ws.send(data.buf);
-          setStatus((s) => (s === "streaming" ? s : "streaming"));
-        } catch {
-          void 0;
+      const source = ctx.createMediaStreamSource(streamRef.current);
+      const node = new AudioWorkletNode(ctx, "system-pcm-worklet");
+      nodeRef.current = node;
+
+      node.port.onmessage = (e) => {
+        const data = e.data as any;
+        if (!data) return;
+        if (data.type === "energy" && typeof data.rms === "number") {
+          lastRmsRef.current = data.rms;
+          const now = Date.now();
+          if (data.rms > 0.02) lastSpeechMsRef.current = now;
+          return;
         }
-      }
-    };
+        if (data.type === "chunk" && data.buf) {
+          const ws = wsRef.current;
+          if (!ws || ws.readyState !== WebSocket.OPEN) return;
+          try {
+            ws.send(data.buf);
+            setStatus((s) => (s === "streaming" ? s : "streaming"));
+          } catch {
+            void 0;
+          }
+        }
+      };
 
-    source.connect(node);
-    setStatus("streaming");
+      source.connect(node);
+      setStatus("streaming");
+    } catch (err: any) {
+      setStatus("error");
+      setError(err?.message ?? "Failed to start audio pipeline.");
+    }
   }, [connectProxy, systemStream]);
 
   useEffect(() => {
@@ -338,13 +350,21 @@ export function useInterviewerProxyTranscription({
     return () => stop();
   }, [stop]);
 
+  const clearTranscript = useCallback(() => {
+    setFinalizedLines([]);
+    setInterimText("");
+    lastFinalSentenceRef.current = "";
+  }, []);
+
   return {
     status,
     error,
+    finalizedLines,
     interimText,
+    lastFinalSentence: lastFinalSentenceRef.current,
     isSpeechActive,
     start,
     stop,
-    reset: () => setInterimText(""),
+    clearTranscript,
   };
 }
