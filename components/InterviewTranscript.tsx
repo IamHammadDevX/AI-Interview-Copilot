@@ -72,7 +72,9 @@ export default function InterviewTranscript({
                   </div>
                 </div>
                 <div className="text-xs leading-relaxed whitespace-pre-wrap break-words">
-                  {it.text}
+                  <span className={cn(it.isFinal === false && 'opacity-70 italic')}>
+                    {it.text}
+                  </span>
                 </div>
               </div>
             </div>
@@ -83,4 +85,3 @@ export default function InterviewTranscript({
     </div>
   )
 }
-
