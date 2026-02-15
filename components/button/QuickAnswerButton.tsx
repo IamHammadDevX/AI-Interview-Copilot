@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Zap, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -21,7 +21,6 @@ const QuickAnswerButton = ({
 
     setIsSending(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
       if (onClick) await onClick();
     } catch (error) {
       console.error('Request failed:', error);
@@ -30,20 +29,8 @@ const QuickAnswerButton = ({
     }
   }, [onClick, isSending, disabled]);
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      const activeTag = (document.activeElement?.tagName || '').toLowerCase();
-      if (activeTag === 'input' || activeTag === 'textarea') return;
-
-      if (e.code === 'KeyA' && !isSending && !disabled) {
-        e.preventDefault();
-        handleClick();
-      }
-    };
-
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [handleClick, isSending, disabled]);
+  // Keyboard shortcut "A" is handled by the parent Recorder component
+  // to avoid duplicate handlers and ensure correct behavior across modes
 
   if (isCompact) {
     return (

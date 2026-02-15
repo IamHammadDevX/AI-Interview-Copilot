@@ -26,9 +26,9 @@ export async function POST(req: NextRequest) {
     const openai = new OpenAI({ apiKey });
 
     /* ──────────────────────────────────────────────────────────────
-      1. Parse incoming payload — clone to avoid body lock
+      1. Parse incoming payload
        ───────────────────────────────────────────────────────────── */
-    const body = await req.clone().json();
+    const body = await req.json();
     const {
       transcript,
       history = [],
@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
       model: 'gpt-4o-mini',
       messages,
       stream: true,
+      stream_options: { include_usage: false },
       max_tokens: 800,
       temperature: 0.3,
     });

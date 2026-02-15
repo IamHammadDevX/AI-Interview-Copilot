@@ -56,8 +56,8 @@ export default function useChatService({
       abortControllerRef.current.abort();
     }
 
+    // Add user message and show thinking immediately — zero delay
     addMessageToHistory('user', question);
-
     setIsThinking(true);
 
     try {
@@ -194,7 +194,7 @@ export default function useChatService({
       }
 
       const fullHistory = [...chatHistoryRef.current];
-      const historyToSend = fullHistory.slice(-9);
+      const historyToSend = fullHistory.slice(-5);
 
       const res = await makeCopilotRequest({
         question,
@@ -253,6 +253,7 @@ export default function useChatService({
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let accumulatedContent = '';
+      let sseBuffer = '';
 
       if (reader) {
         try {
@@ -261,27 +262,32 @@ export default function useChatService({
 
             if (done) break;
 
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
+            sseBuffer += decoder.decode(value, { stream: true });
+            const lines = sseBuffer.split('\n');
+            // Keep incomplete last line in buffer
+            sseBuffer = lines.pop() ?? '';
 
             for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
+              const trimmed = line.trim();
+              if (!trimmed.startsWith('data:')) continue;
+              const data = trimmed.slice(5).trim();
 
+              if (!data || data === '[DONE]') {
                 if (data === '[DONE]') {
                   setIsStreaming(false);
                   return;
                 }
+                continue;
+              }
 
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.content) {
-                    accumulatedContent += parsed.content;
-                    updateLastMessageInHistory(accumulatedContent);
-                  }
-                } catch {
-                  /* ignore */
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  accumulatedContent += parsed.content;
+                  updateLastMessageInHistory(accumulatedContent);
                 }
+              } catch {
+                /* ignore */
               }
             }
           }

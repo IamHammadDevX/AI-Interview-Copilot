@@ -81,12 +81,11 @@ function buildDeepgramUrl(): string {
     sample_rate:     "16000",
     channels:        "1",
     interim_results: "true",
-    endpointing:     "200",        // 200ms — faster speech-end detection
+    endpointing:     "150",        // 150ms — faster speech-end detection
     smart_format:    "true",
-    diarize:         "true",
+    diarize:         "false",      // skip diarization → lower latency
     vad_events:      "true",       // voice-activity events for faster detection
     no_delay:        "true",       // disable internal buffering → lowest latency
-    // NOTE: utterances is batch-only — omitted for streaming
   });
   return `wss://api.deepgram.com/v1/listen?${q.toString()}`;
 }
@@ -244,7 +243,7 @@ wss.on("connection", (client) => {
     // Use Authorization header (faster handshake than sub-protocol auth)
     const sock = new WebSocket(url, {
       headers: { Authorization: `Token ${apiKey}` },
-      handshakeTimeout: 5_000,   // 5s — fail fast, retry fast
+      handshakeTimeout: 3_000,   // 3s — fail fast, retry fast
     });
     sock.binaryType = "arraybuffer";
 
@@ -294,9 +293,9 @@ wss.on("connection", (client) => {
 
       lastTranscriptMs = Date.now();
 
-      const words = alt?.words ?? [];
-      const sp = speakerMajority(words);
-      const speaker = sp === 0 || sp === null ? "interviewer" : "other";
+      // With diarize=false, all speech comes from the system audio
+      // (interviewer's voice). No speaker detection needed.
+      const speaker = "interviewer";
       const out: ProxyTranscriptMsg = {
         type: "transcript",
         text: transcript,

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     /* ──────────────────────────────────────────────────────────────
       1. Parse incoming payload
        ───────────────────────────────────────────────────────────── */
-    const body = await req.clone().json();
+    const body = await req.json();
     const {
       transcript,
       history = [],

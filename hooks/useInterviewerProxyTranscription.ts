@@ -336,13 +336,13 @@ export function useInterviewerProxyTranscription({
   useEffect(() => {
     const id = window.setInterval(() => {
       const now = Date.now();
-      const active = now - lastSpeechMsRef.current < 500;
+      const active = now - lastSpeechMsRef.current < 350;
       if (speechActiveRef.current !== active) {
         speechActiveRef.current = active;
         setIsSpeechActive(active);
         onSpeechActiveChange?.(active);
       }
-    }, 80);
+    }, 50);
     return () => window.clearInterval(id);
   }, [onSpeechActiveChange]);
 

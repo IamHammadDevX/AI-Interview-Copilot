@@ -15,8 +15,9 @@ export const dynamic = 'force-dynamic';
  * Returns: { question: string }
  */
 export async function POST(req: NextRequest) {
+  const rawBody = await req.text();
   try {
-    const { text } = (await req.clone().json()) as { text?: string };
+    const { text } = JSON.parse(rawBody) as { text?: string };
     if (!text?.trim()) {
       return Response.json({ question: '' }, { status: 200 });
     }
@@ -70,10 +71,9 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error('Smart question error:', err?.message);
     // Graceful fallback
-    const body = await req.clone().text().catch(() => '{}');
     let fallback = '';
     try {
-      fallback = JSON.parse(body)?.text || '';
+      fallback = JSON.parse(rawBody)?.text || '';
     } catch {
       void 0;
     }

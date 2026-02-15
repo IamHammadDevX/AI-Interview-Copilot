@@ -14,6 +14,21 @@ import SpeechRecognitionToggle from './common/SpeechRecognitionToggle';
 import TimerDisplay from './common/TimerDisplay';
 import LiveTranscript from './LiveTranscript';
 
+/** Instant client-side question cleanup — zero latency, no network call */
+function cleanQuestion(raw: string): string {
+  const text = raw.trim()
+  if (!text) return text
+  // Already a clean question
+  if (text.endsWith('?') && text.split(/\s+/).length >= 3) return text
+  // Starts with a question/instruction word → clean punctuation, add "?"
+  const qPattern = /^(what|how|why|when|where|who|which|can|could|would|should|do|does|did|is|are|was|were|have|has|had|will|shall|tell|explain|describe)/i
+  if (qPattern.test(text)) {
+    return text.replace(/[.!,;:]+$/, '').trim() + '?'
+  }
+  // Fallback: just append "?"
+  return text.replace(/[.!,;:]+$/, '').trim() + '?'
+}
+
 type Props = {
   audioStream: MediaStream | null;
   audioSources?:
@@ -45,13 +60,12 @@ export default function Recorder({
     systemStream: audioSources?.system ?? null,
   })
 
-  // Cache last final sentence in a ref so hotkey always reads latest
-  const lastFinalRef = useRef("")
+  // Mirror finalized lines in a ref so the hotkey callback
+  // always reads the latest lines without needing a dependency
+  const finalLinesRef = useRef(interview.finalizedLines)
   useEffect(() => {
-    if (interview.lastFinalSentence) {
-      lastFinalRef.current = interview.lastFinalSentence
-    }
-  }, [interview.lastFinalSentence])
+    finalLinesRef.current = interview.finalizedLines
+  }, [interview.finalizedLines])
 
   const [elapsed, setElapsed] = useState(0)
   const formattedElapsed = useMemo(
@@ -113,10 +127,9 @@ export default function Recorder({
     clearContext();
   };
 
-  const handleInterviewAnswer = useCallback(async () => {
-    // Use the cached last finalized interviewer sentence
-    const q = lastFinalRef.current.trim()
-    if (!q) {
+  const handleInterviewAnswer = useCallback(() => {
+    const lines = finalLinesRef.current
+    if (lines.length === 0) {
       ErrorToast('No finalized interviewer sentence yet.')
       return
     }
@@ -125,47 +138,41 @@ export default function Recorder({
       return
     }
 
-    // Smart question conversion — fast heuristic first, AI fallback
-    try {
-      const res = await fetch('/api/smart-question', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: q }),
-      })
-      if (res.ok) {
-        const { question } = await res.json()
-        if (question?.trim()) {
-          onAddUserTurn(question.trim())
-          return
-        }
-      }
-    } catch {
-      // Smart question failed — send raw transcript
-    }
-    onAddUserTurn(q)
+    // Aggregate recent finalized lines within a 20-second window
+    // so multi-segment questions are captured fully
+    const lastTs = lines[lines.length - 1].ts
+    const recent = lines
+      .filter(l => l.ts >= lastTs - 20_000)
+      .map(l => l.text)
+      .join(' ')
+      .trim()
+
+    const raw = recent || lines[lines.length - 1].text
+
+    // Instant client-side question cleanup — no network call
+    const question = cleanQuestion(raw)
+    onAddUserTurn(question)
   }, [interview.isSpeechActive, onAddUserTurn])
 
-  // Hotkey "A" → trigger AI with last finalized interviewer sentence
-  // Only fires when not focused on input/textarea
+  // Unified hotkey "A" — works for all modes (project + voice recorder)
   useEffect(() => {
-    if (!hasProject) return
-
     const onKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept when user is typing in an input field
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase()
       if (tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable) return
-
-      // Only plain "A" key (no modifiers)
       if (e.key.toLowerCase() !== 'a') return
       if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return
 
       e.preventDefault()
-      handleInterviewAnswer()
+      if (hasProject) {
+        handleInterviewAnswer()
+      } else if (recording) {
+        quickAnswer()
+      }
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [hasProject, handleInterviewAnswer])
+  }, [hasProject, handleInterviewAnswer, recording, quickAnswer])
 
   if (hasProject) {
     return (
@@ -201,7 +208,7 @@ export default function Recorder({
               <QuickAnswerButton
                 isCompact
                 onClick={handleInterviewAnswer}
-                disabled={interview.status !== 'streaming' || interview.isSpeechActive || !lastFinalRef.current.trim()}
+                disabled={interview.status !== 'streaming' || interview.isSpeechActive || interview.finalizedLines.length === 0}
               />
               <ClearContextButton
                 isCompact

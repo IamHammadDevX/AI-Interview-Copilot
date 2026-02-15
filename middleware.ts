@@ -13,7 +13,7 @@ function getSupabaseEnv() {
 export async function middleware(req: NextRequest) {
   const { url, anonKey } = getSupabaseEnv();
 
-  const response = NextResponse.next({
+  let response = NextResponse.next({
     request: {
       headers: req.headers,
     },
@@ -28,6 +28,14 @@ export async function middleware(req: NextRequest) {
         return req.cookies.getAll();
       },
       setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          req.cookies.set(name, value)
+        );
+        response = NextResponse.next({
+          request: {
+            headers: req.headers,
+          },
+        });
         cookiesToSet.forEach(({ name, value, options }) => {
           response.cookies.set(name, value, options);
         });
@@ -57,5 +65,14 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/panel/:path*"],
+  matcher: [
+    /*
+     * Match dashboard and panel routes, but explicitly skip:
+     * - api routes (/api/...)
+     * - Next.js internals (_next/static, _next/image)
+     * - favicon.ico
+     */
+    "/dashboard/:path*",
+    "/panel",
+  ],
 };
