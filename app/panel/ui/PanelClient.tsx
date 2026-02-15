@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import useChatService from '@/hooks/useChatService'
-import useMicPermission from '@/hooks/useMicPermission'
 import { Download, Edit3, Settings, Trash2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import {
@@ -113,7 +112,6 @@ const Bubble = memo(function Bubble({
 })
 
 export default function PanelClient({ projectId }: { projectId?: string | null }) {
-  const { requestMic } = useMicPermission()
   const [captureStream, setCaptureStream] = useState<MediaStream | null>(null)
   const [captureSources, setCaptureSources] = useState<
     | {
@@ -163,10 +161,6 @@ export default function PanelClient({ projectId }: { projectId?: string | null }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
-
-  useEffect(() => {
-    requestMic()
-  }, [requestMic])
 
   const handleExternalStopHandled = useCallback(() => {
     setShouldStopCapture(false)

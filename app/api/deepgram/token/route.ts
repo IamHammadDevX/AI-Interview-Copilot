@@ -21,6 +21,12 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const apiKey = getDeepgramKey();
-  return NextResponse.json({ token: apiKey, tokenType: "api_key" });
+  void getDeepgramKey();
+  return NextResponse.json(
+    {
+      error:
+        "This endpoint is disabled. Use the server-side Deepgram proxy (browser must not receive API keys).",
+    },
+    { status: 410 }
+  );
 }

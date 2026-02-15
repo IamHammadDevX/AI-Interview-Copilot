@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
 'use client';
 
-import InterviewTranscript from '@/components/InterviewTranscript'
 import { ErrorToast } from '@/components/Toast'
-import { useInterviewTranscription } from '@/hooks/useInterviewTranscription'
+import InterimTranscript from '@/components/InterimTranscript'
+import { useInterviewerProxyTranscription } from '@/hooks/useInterviewerProxyTranscription'
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import useVoiceRecorderWebAPI from '@/hooks/useWebSpeechRecorder';
 import { useEffect, useMemo, useState } from 'react';
@@ -35,15 +35,14 @@ export default function Recorder({
   onAddUserTurn,
   onTranscribingChange,
 }: Props) {
-  const hasInterviewSources = Boolean(audioSources?.system && audioSources?.mic && projectId)
+  const hasProject = Boolean(projectId)
 
-  const interview = useInterviewTranscription({
-    projectId: projectId ?? null,
-    sources:
-      audioSources?.system && audioSources?.mic
-        ? { system: audioSources.system, mic: audioSources.mic }
-        : null,
-    onTranscribingChange,
+  const interview = useInterviewerProxyTranscription({
+    onSpeechActiveChange: (active) => {
+      if (active) onTranscribingChange(true)
+      if (!active) onTranscribingChange(false)
+    },
+    systemStream: audioSources?.system ?? null,
   })
 
   const [elapsed, setElapsed] = useState(0)
@@ -56,7 +55,7 @@ export default function Recorder({
   const [transcript, setTranscript] = useState('');
 
   useEffect(() => {
-    if (!interview.isListening) {
+    if (interview.status !== 'streaming') {
       setElapsed(0)
       return
     }
@@ -65,7 +64,7 @@ export default function Recorder({
       setElapsed(Math.floor((Date.now() - start) / 1000))
     }, 1000)
     return () => window.clearInterval(id)
-  }, [interview.isListening])
+  }, [interview.status])
 
   const handleLiveTranscript = (txt: string) => {
     setTranscript(txt);
@@ -107,19 +106,19 @@ export default function Recorder({
   };
 
   const handleInterviewAnswer = async () => {
-    if (!interview.isListening) {
-      ErrorToast('Start listening first.')
+    const q = interview.interimText.trim()
+    if (!q) {
+      ErrorToast('No interviewer text yet.')
       return
     }
-    const q = interview.lastInterviewerQuestion.trim()
-    if (!q) {
-      ErrorToast('No interviewer question detected yet.')
+    if (interview.isSpeechActive) {
+      ErrorToast('Wait for speech to pause before sending to copilot.')
       return
     }
     onAddUserTurn(q)
   }
 
-  if (hasInterviewSources) {
+  if (hasProject) {
     return (
       <div className="w-full h-full bg-muted/40 rounded-3xl p-4 border border-border">
         <div className="flex gap-4 h-full">
@@ -128,18 +127,23 @@ export default function Recorder({
               <TimerDisplay
                 isCompact
                 formattedTime={formattedElapsed}
-                recording={interview.isListening}
+                recording={interview.status === 'streaming'}
               />
               <div className="text-[11px] text-muted-foreground px-1">
-                System audio + mic capture
+                System audio only (20ms PCM)
               </div>
+              {interview.error && (
+                <div className="text-[11px] text-destructive px-1 max-w-[180px] break-words">
+                  {interview.error}
+                </div>
+              )}
             </div>
 
             <div className="flex justify-center flex-1 items-center">
               <RecordButton
-                onClick={interview.isListening ? interview.stopListening : interview.startListening}
+                onClick={interview.status === 'streaming' ? interview.stop : interview.start}
                 disabled={false}
-                recording={interview.isListening}
+                recording={interview.status === 'streaming'}
                 isCompact
               />
             </div>
@@ -148,21 +152,18 @@ export default function Recorder({
               <QuickAnswerButton
                 isCompact
                 onClick={handleInterviewAnswer}
-                disabled={!interview.isListening}
+                disabled={interview.status !== 'streaming' || interview.isSpeechActive || !interview.interimText.trim()}
               />
               <ClearContextButton
                 isCompact
-                onClick={interview.clearLocalTranscript}
+                onClick={interview.reset}
                 disabled={false}
               />
             </div>
           </div>
 
           <div className="flex-1 min-w-0">
-            <InterviewTranscript
-              items={interview.items}
-              isListening={interview.isListening}
-            />
+            <InterimTranscript text={interview.interimText} streaming={interview.status === 'streaming'} />
           </div>
         </div>
       </div>

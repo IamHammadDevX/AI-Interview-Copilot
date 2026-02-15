@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run dev:all",
+    "dev:next": "next dev",
+    "dev:proxy": "tsx api/ws-proxy.ts",
+    "dev:all": "concurrently -k \"npm run dev:next\" \"npm run dev:proxy\"",
     "build": "next build",
     "postbuild": "next-sitemap",
     "start": "next start",
@@ -37,7 +40,8 @@
     "react-hot-toast": "^2.4.1",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^14.1.4",
@@ -47,9 +51,11 @@
     "@types/node": "^20.12.2",
     "@types/react": "^18.2.73",
     "@types/react-dom": "^18.2.23",
+    "concurrently": "^9.1.2",
     "next-sitemap": "^4.2.3",
     "postcss": "^8.4.38",
     "tailwindcss": "^4.1.7",
+    "tsx": "^4.19.2",
     "typescript": "^5.4.3"
   }
 }

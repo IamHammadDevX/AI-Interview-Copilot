@@ -16,7 +16,6 @@ export const useScreenCapture = (
 ) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const meetStreamRef = useRef<MediaStream | null>(null);
-  const micStreamRef = useRef<MediaStream | null>(null);
 
   const [capturing, setCapturing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,20 +28,10 @@ export const useScreenCapture = (
         audio: true,
       });
 
-      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Mix system + mic audio
-      const ctx = new AudioContext();
-      await ctx.resume();
-      const dest = ctx.createMediaStreamDestination();
-      ctx.createMediaStreamSource(mic).connect(dest);
-      ctx
-        .createMediaStreamSource(new MediaStream(meet.getAudioTracks()))
-        .connect(dest);
-
+      const systemAudio = new MediaStream(meet.getAudioTracks());
       const preview = new MediaStream([
         ...meet.getVideoTracks(),
-        ...dest.stream.getAudioTracks(),
+        ...systemAudio.getAudioTracks(),
       ]);
 
       if (videoRef.current) {
@@ -50,15 +39,14 @@ export const useScreenCapture = (
         await videoRef.current.play();
       }
 
-      onStreamAvailable(dest.stream);
+      onStreamAvailable(systemAudio);
       onSourcesAvailable?.({
-        mixed: dest.stream,
-        system: new MediaStream(meet.getAudioTracks()),
-        mic: new MediaStream(mic.getAudioTracks()),
+        mixed: systemAudio,
+        system: systemAudio,
+        mic: new MediaStream(),
       });
 
       meetStreamRef.current = meet;
-      micStreamRef.current = mic;
       setCapturing(true);
     } catch (err) {
       console.error('Screen capture error:', err);
@@ -69,7 +57,6 @@ export const useScreenCapture = (
 
   const stopCapture = useCallback(() => {
     meetStreamRef.current?.getTracks().forEach((t) => t.stop());
-    micStreamRef.current?.getTracks().forEach((t) => t.stop());
 
     if (videoRef.current) videoRef.current.srcObject = null;
 

@@ -3,7 +3,6 @@
 import { useGlobalShortcut } from '@/hooks/useGlobalShortcut';
 import {
   Loader2,
-  Mic,
   Monitor,
   MonitorPlay,
   MonitorX,
@@ -115,8 +114,8 @@ const ScreenCapture = ({
               </h3>
               <p className="opacity-70 max-w-md text-sm leading-relaxed">
                 {loading
-                  ? 'Setting up your screen share and microphone...'
-                  : 'Share your screen and start capturing high-quality video with synchronized audio from your microphone.'}
+                  ? 'Setting up your screen share and system audio...'
+                  : 'Share your screen and capture video with system audio.'}
               </p>
             </div>
 
@@ -125,10 +124,6 @@ const ScreenCapture = ({
                 <div className="flex items-center space-x-2">
                   <Monitor className="w-4 h-4" />
                   <span>Screen Share</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Mic className="w-4 h-4" />
-                  <span>Microphone</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Volume2 className="w-4 h-4" />
