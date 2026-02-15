@@ -208,7 +208,7 @@ describe("ws-proxy integration", () => {
       const dgMsg = {
         type: "Results",
         channel: {
-          alternatives: [{ transcript: "", words: [] }],
+          alternatives: [{ transcript: "", words: [] as { word: string; speaker: number }[] }],
         },
         is_final: true,
         speech_final: false,

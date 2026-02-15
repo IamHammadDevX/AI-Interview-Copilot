@@ -81,11 +81,11 @@ export async function POST(req: NextRequest) {
       5. Stream completion back to the client
        ────────────────────────────────────────────────────────────── */
     const stream = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o-mini',
       messages,
       stream: true,
-      max_tokens: 1000,
-      temperature: 0.7,
+      max_tokens: 800,
+      temperature: 0.3,
     });
 
     const encoder = new TextEncoder();

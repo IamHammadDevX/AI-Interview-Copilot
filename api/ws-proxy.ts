@@ -9,6 +9,8 @@ import type {
   ProxyTranscriptMsg,
 } from "../shared/transcription";
 
+/* ─── Types ─────────────────────────────────────────────────── */
+
 type DeepgramWord = {
   word?: string;
   speaker?: number;
@@ -27,6 +29,8 @@ type DeepgramMessage = {
   speech_final?: boolean;
   start?: number;
 };
+
+/* ─── Env helpers ───────────────────────────────────────────── */
 
 function loadDotEnvFile(filePath: string): void {
   let raw = "";
@@ -68,22 +72,26 @@ function getEnv(name: string): string | null {
   return process.env[name] ?? null;
 }
 
+/* ─── Deepgram URL — Nova-3 optimised for low-latency live streaming ── */
+
 function buildDeepgramUrl(): string {
   const q = new URLSearchParams({
-    model: "nova-3",
-    diarize: "true",
-    utterances: "true",
-    smart_format: "true",
-    filler_words: "false",
-    profanity_filter: "true",
-    encoding: "linear16",
-    sample_rate: "16000",
-    channels: "1",
+    model:           "nova-3",
+    encoding:        "linear16",
+    sample_rate:     "16000",
+    channels:        "1",
     interim_results: "true",
-    endpointing: "300",
+    endpointing:     "200",        // 200ms — faster speech-end detection
+    smart_format:    "true",
+    diarize:         "true",
+    vad_events:      "true",       // voice-activity events for faster detection
+    no_delay:        "true",       // disable internal buffering → lowest latency
+    // NOTE: utterances is batch-only — omitted for streaming
   });
   return `wss://api.deepgram.com/v1/listen?${q.toString()}`;
 }
+
+/* ─── Helpers ───────────────────────────────────────────────── */
 
 function normalizeCloseReason(reason: string): string {
   if (!reason) return "";
@@ -138,6 +146,8 @@ function status(state: ProxyStatusMsg["state"], detail?: string): ProxyStatusMsg
   return { type: "status", state, detail };
 }
 
+/* ─── Boot ──────────────────────────────────────────────────── */
+
 loadLocalEnvIfNeeded();
 
 const server = http.createServer((req, res) => {
@@ -147,52 +157,129 @@ const server = http.createServer((req, res) => {
 
 const wss = new WebSocketServer({ server, path: "/ws/transcribe" });
 
+/* ─── Per-client connection handler ─────────────────────────── */
+
 wss.on("connection", (client) => {
   console.log("[proxy] Browser client connected");
+
+  /* ── Connection state ── */
   let stopped = false;
   let dg: WebSocket | null = null;
   let dgConnecting = false;
   let dgAttempts = 0;
-  const dgMaxAttempts = 5;
+  const DG_MAX_ATTEMPTS = 10;
+
+  // Generation counter — prevents stale socket callbacks from
+  // interfering when a newer connectDeepgram() call supersedes.
+  let connectGen = 0;
+
+  // Audio ring-buffer: keeps last ~5s (250 × 20ms frames) so
+  // Deepgram gets immediate context after a reconnect.
+  const AUDIO_RING_CAP = 250;
   const audioQueue: Buffer[] = [];
 
+  // Timers
+  let keepAliveTimer: ReturnType<typeof setInterval> | null = null;
+  let reconnectTimerId: ReturnType<typeof setTimeout> | null = null;
+  let lastTranscriptMs = 0; // watchdog: detect silent connections
+
+  /* ── teardownDg — clean up the Deepgram socket only ── */
+  const teardownDg = () => {
+    if (keepAliveTimer) { clearInterval(keepAliveTimer); keepAliveTimer = null; }
+    const old = dg;
+    dg = null;
+    dgConnecting = false;
+    if (old) {
+      try { old.removeAllListeners(); } catch { void 0; }
+      try { old.close(); } catch { void 0; }
+    }
+    // Keep buffered audio — reconnect will flush it to the new socket
+    while (audioQueue.length > AUDIO_RING_CAP) audioQueue.shift();
+  };
+
+  /* ── scheduleReconnect — deduped, single timer ── */
+  const scheduleReconnect = () => {
+    if (stopped) return;
+    if (reconnectTimerId) return;            // already scheduled
+    if (dgAttempts >= DG_MAX_ATTEMPTS) {
+      sendJson(client, status("error", "Deepgram reconnect limit reached. Refresh to retry."));
+      try { client.close(); } catch { void 0; }
+      return;
+    }
+    // Exponential backoff: 300, 600, 1200, 2400, 3000, 3000 …
+    const delay = Math.min(3000, 300 * 2 ** dgAttempts);
+    dgAttempts += 1;
+    console.log(`[proxy] Scheduling reconnect in ${delay}ms (attempt ${dgAttempts}/${DG_MAX_ATTEMPTS})`);
+    sendJson(client, status("connected", `Reconnecting…`));
+    reconnectTimerId = setTimeout(() => {
+      reconnectTimerId = null;
+      if (!stopped) connectDeepgram();
+    }, delay);
+  };
+
+  /* ── connectDeepgram — create a fresh Deepgram WebSocket ── */
   const connectDeepgram = () => {
-    if (stopped || dgConnecting || dg) return;
+    if (stopped) return;
+
+    // Increment generation FIRST so any in-flight handlers from
+    // a previous socket will see a stale gen and bail out.
+    connectGen += 1;
+    const thisGen = connectGen;
+
+    // Clean up previous socket (if any)
+    teardownDg();
     dgConnecting = true;
 
     const apiKey = getEnv("DEEPGRAM_API_KEY");
     if (!apiKey) {
       dgConnecting = false;
       sendJson(client, status("error", "Missing DEEPGRAM_API_KEY in server env"));
-      try {
-        client.close();
-      } catch {
-        void 0;
-      }
+      try { client.close(); } catch { void 0; }
       return;
     }
+
     const url = buildDeepgramUrl();
-    const sock = new WebSocket(url, ["token", apiKey]);
+    console.log(`[proxy] Connecting to Deepgram (attempt ${dgAttempts + 1}/${DG_MAX_ATTEMPTS})…`);
+
+    // Use Authorization header (faster handshake than sub-protocol auth)
+    const sock = new WebSocket(url, {
+      headers: { Authorization: `Token ${apiKey}` },
+      handshakeTimeout: 5_000,   // 5s — fail fast, retry fast
+    });
     sock.binaryType = "arraybuffer";
 
+    /* ── OPEN ── */
     sock.on("open", () => {
+      if (thisGen !== connectGen) {
+        // A newer connectDeepgram() superseded us — discard
+        try { sock.close(); } catch { void 0; }
+        return;
+      }
       console.log("[proxy] Deepgram connection OPEN");
       dgConnecting = false;
       dgAttempts = 0;
       dg = sock;
+      lastTranscriptMs = Date.now();
       sendJson(client, status("streaming"));
-      while (audioQueue.length) {
-        const b = audioQueue.shift();
-        if (!b) continue;
-        try {
-          sock.send(b);
-        } catch {
-          break;
+
+      // KeepAlive every 5s — Deepgram's idle timeout is ~10s,
+      // so 5s interval provides safe margin.
+      keepAliveTimer = setInterval(() => {
+        if (dg?.readyState === WebSocket.OPEN) {
+          try { dg.send(JSON.stringify({ type: "KeepAlive" })); } catch { void 0; }
         }
+      }, 5_000);
+
+      // Flush buffered audio so Deepgram gets immediate context
+      const queued = audioQueue.splice(0, audioQueue.length);
+      for (const b of queued) {
+        try { sock.send(b); } catch { break; }
       }
     });
 
+    /* ── MESSAGE — Deepgram transcript result ── */
     sock.on("message", (rawData, isBinary) => {
+      if (thisGen !== connectGen) return;
       if (isBinary) return;
       const data = rawData.toString();
       let msg: DeepgramMessage | null = null;
@@ -204,6 +291,9 @@ wss.on("connection", (client) => {
       const alt = msg.channel?.alternatives?.[0];
       const transcript = (alt?.transcript ?? "").trim();
       if (!transcript) return;
+
+      lastTranscriptMs = Date.now();
+
       const words = alt?.words ?? [];
       const sp = speakerMajority(words);
       const speaker = sp === 0 || sp === null ? "interviewer" : "other";
@@ -216,56 +306,54 @@ wss.on("connection", (client) => {
         ts: Date.now(),
       };
       console.log(
-        `[proxy] ▸ ${out.speaker} | final=${out.isFinal} speechFinal=${out.speechFinal} | "${out.text.slice(0, 60)}"`
+        `[proxy] ▸ ${out.speaker} | final=${out.isFinal} speechFinal=${out.speechFinal} | "${out.text.slice(0, 80)}"`
       );
       sendJson(client, out);
     });
 
+    /* ── CLOSE ── */
     sock.on("close", (code, reason) => {
+      if (thisGen !== connectGen) return; // stale
       console.log(`[proxy] Deepgram closed: code=${code} reason=${reason?.toString() ?? ""}`);
-      dgConnecting = false;
-      dg = null;
+      teardownDg();
       if (stopped) return;
       const reasonStr = normalizeCloseReason(reason?.toString() ?? "");
       if (isAuthFailure(code ?? 0, reasonStr)) {
         sendJson(client, status("error", `Deepgram auth rejected: ${reasonStr || "unauthorized"}`));
-        try {
-          client.close();
-        } catch {
-          void 0;
-        }
+        try { client.close(); } catch { void 0; }
         return;
       }
-
-      if (dgAttempts >= dgMaxAttempts) {
-        sendJson(client, status("error", "Deepgram reconnect limit reached"));
-        try {
-          client.close();
-        } catch {
-          void 0;
-        }
-        return;
-      }
-      const delay = Math.min(3000, 250 * 2 ** dgAttempts);
-      dgAttempts += 1;
-      sendJson(client, status("connected", `Deepgram reconnecting in ${delay}ms`));
-      setTimeout(() => {
-        if (stopped) return;
-        connectDeepgram();
-      }, delay);
+      scheduleReconnect();
     });
 
+    /* ── ERROR ── */
     sock.on("error", (err) => {
+      if (thisGen !== connectGen) return; // stale
       console.error("[proxy] Deepgram socket error:", err?.message ?? err);
-      dgConnecting = false;
+      teardownDg();
       if (stopped) return;
-      sendJson(client, status("error", "Deepgram socket error"));
+      sendJson(client, status("error", `DG error: ${err?.message ?? "unknown"}`));
+      scheduleReconnect();
     });
   };
 
+  /* ── Watchdog: if no transcripts for 25s despite audio flowing,
+       force a reconnect (handles silent / zombie connections) ── */
+  const watchdogTimer = setInterval(() => {
+    if (stopped || !dg || dg.readyState !== WebSocket.OPEN) return;
+    if (Date.now() - lastTranscriptMs > 25_000) {
+      console.warn("[proxy] Watchdog: no transcripts for 25s — forcing reconnect");
+      dgAttempts = 0; // give full retry budget
+      teardownDg();
+      scheduleReconnect();
+    }
+  }, 10_000);
+
+  /* ── Kick off ── */
   sendJson(client, status("connected"));
   connectDeepgram();
 
+  /* ── Browser → Deepgram audio pipeline ── */
   let audioFrames = 0;
   client.on("message", (rawData, isBinary) => {
     if (stopped) return;
@@ -279,17 +367,10 @@ wss.on("connection", (client) => {
       }
       if (msg.type === "stop") {
         stopped = true;
-        try {
-          dg?.close();
-        } catch {
-          void 0;
-        }
-        dg = null;
-        try {
-          client.close();
-        } catch {
-          void 0;
-        }
+        teardownDg();
+        if (reconnectTimerId) { clearTimeout(reconnectTimerId); reconnectTimerId = null; }
+        clearInterval(watchdogTimer);
+        try { client.close(); } catch { void 0; }
       }
       return;
     }
@@ -299,29 +380,26 @@ wss.on("connection", (client) => {
     audioFrames++;
     if (audioFrames === 1) console.log("[proxy] First audio frame received from browser");
     if (audioFrames % 500 === 0) console.log(`[proxy] Audio frames: ${audioFrames} (~${Math.round(audioFrames * 20 / 1000)}s)`);
-    if (dg && dg.readyState === WebSocket.OPEN) {
-      try {
-        dg.send(buf);
-      } catch {
-        void 0;
-      }
+
+    // Send directly to Deepgram if connected, otherwise ring-buffer
+    if (dg?.readyState === WebSocket.OPEN) {
+      try { dg.send(buf); } catch { void 0; }
       return;
     }
     audioQueue.push(buf);
-    while (audioQueue.length > 50) audioQueue.shift();
+    while (audioQueue.length > AUDIO_RING_CAP) audioQueue.shift();
   });
 
   client.on("close", () => {
     console.log("[proxy] Browser client disconnected");
     stopped = true;
-    try {
-      dg?.close();
-    } catch {
-      void 0;
-    }
-    dg = null;
+    teardownDg();
+    if (reconnectTimerId) { clearTimeout(reconnectTimerId); reconnectTimerId = null; }
+    clearInterval(watchdogTimer);
   });
 });
+
+/* ─── Server bootstrap ──────────────────────────────────────── */
 
 let port = Number(process.env.DG_PROXY_PORT ?? 3035);
 const maxPort = port + 10;
@@ -329,7 +407,6 @@ let listening = false;
 let retryScheduled = false;
 
 const killPortAndListen = async () => {
-  // On Windows, try to kill any process holding the port
   try {
     const { execSync } = await import("node:child_process");
     const out = execSync(

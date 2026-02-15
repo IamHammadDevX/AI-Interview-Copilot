@@ -209,7 +209,7 @@ export function useInterviewerProxyTranscription({
       wsRef.current = null;
       if (stoppedRef.current) return;
       const attempt = reconnectAttemptRef.current;
-      if (attempt >= 6) {
+      if (attempt >= 8) {
         setStatus("error");
         setError(
           "Proxy reconnect limit reached. Start the proxy server with `npm run dev:proxy` (or just use `npm run dev`) and retry."
@@ -219,7 +219,7 @@ export function useInterviewerProxyTranscription({
       if (!envProxyUrl) {
         proxyPortRef.current = 3035 + Math.min(attempt + 1, 10);
       }
-      const delay = Math.min(2500, 250 * 2 ** attempt);
+      const delay = Math.min(2000, 200 * 2 ** attempt);
       reconnectAttemptRef.current = attempt + 1;
       reconnectTimerRef.current = window.setTimeout(() => {
         connectProxy();
@@ -336,13 +336,13 @@ export function useInterviewerProxyTranscription({
   useEffect(() => {
     const id = window.setInterval(() => {
       const now = Date.now();
-      const active = now - lastSpeechMsRef.current < 700;
+      const active = now - lastSpeechMsRef.current < 500;
       if (speechActiveRef.current !== active) {
         speechActiveRef.current = active;
         setIsSpeechActive(active);
         onSpeechActiveChange?.(active);
       }
-    }, 120);
+    }, 80);
     return () => window.clearInterval(id);
   }, [onSpeechActiveChange]);
 

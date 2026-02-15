@@ -113,7 +113,7 @@ export default function Recorder({
     clearContext();
   };
 
-  const handleInterviewAnswer = useCallback(() => {
+  const handleInterviewAnswer = useCallback(async () => {
     // Use the cached last finalized interviewer sentence
     const q = lastFinalRef.current.trim()
     if (!q) {
@@ -123,6 +123,24 @@ export default function Recorder({
     if (interview.isSpeechActive) {
       ErrorToast('Wait for speech to pause before sending to copilot.')
       return
+    }
+
+    // Smart question conversion — fast heuristic first, AI fallback
+    try {
+      const res = await fetch('/api/smart-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: q }),
+      })
+      if (res.ok) {
+        const { question } = await res.json()
+        if (question?.trim()) {
+          onAddUserTurn(question.trim())
+          return
+        }
+      }
+    } catch {
+      // Smart question failed — send raw transcript
     }
     onAddUserTurn(q)
   }, [interview.isSpeechActive, onAddUserTurn])

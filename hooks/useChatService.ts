@@ -63,7 +63,7 @@ export default function useChatService({
     try {
       abortControllerRef.current = new AbortController();
 
-      const shouldUseRag = Boolean(projectId) && !imageDataUrl;
+      const shouldUseRag = Boolean(projectId) && !imageDataUrl && !process.env.NEXT_PUBLIC_SKIP_RAG;
 
       if (shouldUseRag) {
         const now = Date.now()

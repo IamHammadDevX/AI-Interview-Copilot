@@ -8,7 +8,7 @@
  *   4. Word count calculation
  *   5. Streaming indicator dot
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React from "react";
 import InterimTranscript from "../components/InterimTranscript";
