@@ -1,34 +1,34 @@
 import { defaultPrompt } from '@/libs/copilotPromptStore';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { APIError, OpenAI } from 'openai';
 
 type Turn = { role: 'user' | 'assistant'; content: string };
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return new NextResponse(
-        JSON.stringify({
+      return Response.json(
+        {
           error: {
             code: 'missing_api_key',
             message:
               'OPENAI_API_KEY is not set. Add it to .env.local to use the OpenAI provider.',
           },
-        }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }
+        },
+        { status: 400 }
       );
     }
 
     const openai = new OpenAI({ apiKey });
 
     /* ──────────────────────────────────────────────────────────────
-      1. Parse incoming payload
+      1. Parse incoming payload — clone to avoid body lock
        ───────────────────────────────────────────────────────────── */
-    const body = await req.json();
+    const body = await req.clone().json();
     const {
       transcript,
       history = [],
@@ -126,16 +126,16 @@ export async function POST(req: NextRequest) {
         err.message ??
         'An error occurred with the OpenAI API.';
 
-      return new NextResponse(JSON.stringify({ error: { code, message } }), {
-        status: err.status ?? 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-upstream-error-code': String(code),
-        },
-      });
+      return Response.json(
+        { error: { code, message } },
+        {
+          status: err.status ?? 500,
+          headers: { 'x-upstream-error-code': String(code) },
+        }
+      );
     }
 
-    return NextResponse.json(
+    return Response.json(
       { error: { message: 'Internal server error' } },
       { status: 500 }
     );

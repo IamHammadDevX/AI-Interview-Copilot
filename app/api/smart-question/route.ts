@@ -1,5 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { OpenAI } from 'openai';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/smart-question
@@ -13,16 +16,16 @@ import { OpenAI } from 'openai';
  */
 export async function POST(req: NextRequest) {
   try {
-    const { text } = (await req.json()) as { text?: string };
+    const { text } = (await req.clone().json()) as { text?: string };
     if (!text?.trim()) {
-      return NextResponse.json({ question: '' }, { status: 200 });
+      return Response.json({ question: '' }, { status: 200 });
     }
 
     const raw = text.trim();
 
     // ── Fast path: already a clean question ──
     if (raw.endsWith('?') && raw.split(/\s+/).length >= 3) {
-      return NextResponse.json({ question: raw });
+      return Response.json({ question: raw });
     }
 
     // ── Heuristic: starts with a question word → just add "?" ──
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (qPattern.test(raw)) {
       const cleaned = raw.replace(/[.!,;:]+$/, '').trim();
       if (cleaned.split(/\s+/).length >= 3) {
-        return NextResponse.json({ question: cleaned + '?' });
+        return Response.json({ question: cleaned + '?' });
       }
     }
 
@@ -39,7 +42,7 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       // Fallback: just append "?"
-      return NextResponse.json({
+      return Response.json({
         question: raw.replace(/[.!,;:]+$/, '').trim() + '?',
       });
     }
@@ -63,18 +66,18 @@ export async function POST(req: NextRequest) {
       completion.choices[0]?.message?.content?.trim() ||
       raw.replace(/[.!,;:]+$/, '').trim() + '?';
 
-    return NextResponse.json({ question });
+    return Response.json({ question });
   } catch (err: any) {
     console.error('Smart question error:', err?.message);
     // Graceful fallback
-    const body = await req.text().catch(() => '{}');
+    const body = await req.clone().text().catch(() => '{}');
     let fallback = '';
     try {
       fallback = JSON.parse(body)?.text || '';
     } catch {
       void 0;
     }
-    return NextResponse.json({
+    return Response.json({
       question: fallback.replace(/[.!,;:]+$/, '').trim() + '?',
     });
   }

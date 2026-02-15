@@ -1,25 +1,25 @@
 import { defaultPrompt } from '@/libs/copilotPromptStore';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { OpenAI } from 'openai';
 
 type Turn = { role: 'user' | 'assistant'; content: string };
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.DEEP_SEEK_API_KEY;
     if (!apiKey) {
-      return new NextResponse(
-        JSON.stringify({
+      return Response.json(
+        {
           error: {
             code: 'missing_api_key',
             message:
               'DEEP_SEEK_API_KEY is not set. Add it to .env.local to use the DeepSeek provider.',
           },
-        }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        }
+        },
+        { status: 400 }
       );
     }
 
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     /* ──────────────────────────────────────────────────────────────
       1. Parse incoming payload
        ───────────────────────────────────────────────────────────── */
-    const body = await req.json();
+    const body = await req.clone().json();
     const {
       transcript,
       history = [],
